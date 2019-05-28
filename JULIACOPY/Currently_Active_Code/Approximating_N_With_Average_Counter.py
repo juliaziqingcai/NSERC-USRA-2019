@@ -18,9 +18,9 @@ seem to say how fast the convergence happens. The speed
 is of interest to our problem, so we are testing with
 this program.
 
-@author Julia Cai, Alexa de Grandmont
-version. 1.0.0
-Last Revision: May 16th, 2019
+It currently holds multiple versions of the algorithm and
+test functions to see differences (accuracy/speed) made by multi-threading,
+as well as a few timeit tests to compare speeds.
 '''
 
 import math
@@ -28,8 +28,11 @@ import random
 import Sampling_Until_Duplicate
 import time
 import datetime
+import threading
+import timeit
 
-def algorithm(n, k):
+
+def algorithm(n, k, approximate_n_results):
     '''
     This function approximates n by applying a new constant,
     2/pi, and the Law of Large Numbers. It still uses duplicate
@@ -39,14 +42,30 @@ def algorithm(n, k):
 
     n = set size
     k = number of times to take a sample counter
+    approximate_n_results = mutable list to ensure all approximated ns
+    can be stored and analyzed, required for multithreaded testing
     '''
 
-    counter_sum = 0
+    #counter_sum = 0
+    results = list()
 
-    for i in range(k):
-        counter = Sampling_Until_Duplicate.algorithm(n)
-        counter_sum += counter
+    for i in range(math.floor(k/3)): #WARNING: DIVIDE BY NUMBER OF THREADS!!!!!!!
+        t1 = threading.Thread(target=Sampling_Until_Duplicate.algorithm, args=(n, results))
+        t2 = threading.Thread(target=Sampling_Until_Duplicate.algorithm, args=(n, results))
+        t3 = threading.Thread(target=Sampling_Until_Duplicate.algorithm, args=(n, results))
+        #t4 = threading.Thread(target=Sampling_Until_Duplicate.algorithm, args=(n, results))
+        t1.start()
+        t2.start()
+        t3.start()
+    t1.join()
+    t2.join()
+    t3.join()
+        #t4.start()
+        #counter = Sampling_Until_Duplicate.algorithm(n)
+        #counter_sum += counter
     
+    #t4.join()
+    counter_sum = sum(results)
     average_counter = counter_sum / (k) # taken due to Law of Large Numbers
     
     cons = 2 / math.pi # set the c for average
@@ -70,8 +89,78 @@ def algorithm(n, k):
     print("E[x]                : " + str(expected_value))
     print("Approximated N      : " + str(approximate_n))
     print("\n")'''
+    approximate_n_results.append(approximate_n)
+    #print("\nApproximate N:" + str(approximate_n))
 
     return approximate_n
+
+
+def algorithm2(n, k, approximate_n_results):
+    '''
+    Same as above, except it tests out slight
+    modifications that change over time (eg, comparing
+    non-threaded to threaded, putting joins inside or outside of
+    for-loop, etc.)
+
+    n = set size
+    k = number of times to take a sample counter
+    '''
+
+    counter_sum = 0
+    #Sampling_Until_Duplicate.counter_sum_reset()
+    results = list()
+
+    for i in range(math.floor(k/3)):
+        t1 = threading.Thread(target=Sampling_Until_Duplicate.algorithm, args=(n, results))
+        t2 = threading.Thread(target=Sampling_Until_Duplicate.algorithm, args=(n, results))
+        t3 = threading.Thread(target=Sampling_Until_Duplicate.algorithm, args=(n, results))
+        t1.start()
+        t2.start()
+        t3.start()
+        counter = Sampling_Until_Duplicate.algorithm3(n)
+        counter_sum += counter
+    t1.join()
+    t2.join()
+    t3.join()
+    counter_sum = sum(results)
+    average_counter = counter_sum / (k) # taken due to Law of Large Numbers
+    
+    cons = 2 / math.pi # set the c for average
+    approximate_n = cons * ((average_counter - (2/3)) ** 2) #  Includes (-2/3) due to proof done on May 16. 2019
+
+    '''CODE TO CHECK MATH PROOF
+    print("\n")
+    print("Average Counter                          : " + str(average_counter))
+    print("Difference between Average Counter & E[X]: " + str((average_counter - (math.sqrt(n) * math.sqrt(math.pi/2)))))
+    print("\n")
+    '''
+
+    expected_value = (math.sqrt(n) * math.sqrt(math.pi/2)) + (2/3)
+    # expected value for comparison to see how close we really are in one run
+
+    '''TESTING CODE FOR ONLY ONE RUN OF THE ALGORITHM
+    print("\n\n\n")
+    print("N                   : " + str(n))
+    print("K                   : " + str(k))
+    print("X-bar               : " + str(average_counter))
+    print("E[x]                : " + str(expected_value))
+    print("Approximated N      : " + str(approximate_n))
+    print("\n")'''
+    
+    approximate_n_results.append(approximate_n)
+    return approximate_n
+
+
+
+# TIMING TESTS
+import timeit
+'''
+print("\n")
+print(timeit.repeat("algorithm(1000, 250)", "from __main__ import algorithm", repeat = 5, number = 100))
+print("\n")
+print(timeit.repeat("algorithm2(1000, 250)", "from __main__ import algorithm2", repeat = 5,  number = 100))
+'''
+
 
 
 def test_wrapper1():
@@ -84,7 +173,12 @@ def test_wrapper1():
     n = int(input("N value: "))
     k = int(input("K value: "))
     
-    algorithm(n, k)
+    approximate_n = algorithm(n, k)
+    print("\n\n\n")
+    print("N                   : " + str(n))
+    print("K                   : " + str(k))
+    print("Approximated N      : " + str(approximate_n))
+    print("\n")
 
     choice_1 = (input("Do you want to run another trial? (Y/N) ")).upper()
 
@@ -94,7 +188,13 @@ def test_wrapper1():
             print("\n")
             n = int(input("N value: "))
             k = int(input("K value: "))
-        algorithm(n, k)
+
+        approximate_n = algorithm(n, k)
+        print("\n\n\n")
+        print("N                   : " + str(n))
+        print("K                   : " + str(k))
+        print("Approximated N      : " + str(approximate_n))
+        print("\n")
         choice_1 = (input("Do you want to run another trial? (Y/N) ")).upper()
 
 # Tests
@@ -105,7 +205,95 @@ def test_wrapper2():
     '''
     This is the continuous test wrapper for the program that
     allows for repeated and continuous testing with varying values
-    by prompting the user for input in the terminal.
+    by prompting the user for input in the terminal. It currently
+    runs a multithreaded version of the test function to hopefully
+    gain some speed.
+    '''
+    print("\n")
+    test_num = int(input("How many tests do you want to run? "))
+    n = int(input("N value: "))
+    k = int(input("K value: "))
+
+    now = datetime.datetime.now()
+    start = time.time()
+    print("\nDate and Time at program start: " + str(now))
+
+    #approximated_n_sum = 0
+    results = list()
+    for i in range(math.floor(test_num/2)):
+        t1 = threading.Thread(target=algorithm, args=(n, k, results))
+        t2 = threading.Thread(target=algorithm, args=(n, k, results))
+        #approximated_n_sum += algorithm(n, k)
+        t1.start()
+        t2.start()
+    t1.join()
+    t2.join()
+    approximated_n_sum = sum(results)
+    final_approximated_n = math.floor(approximated_n_sum / test_num)
+    expected_value = math.floor(math.sqrt(n) * math.sqrt(math.pi/2))
+
+    print("\n\n\n")
+    print("# of Tests                  : " + str(test_num))
+    print("N                           : " + str(n))
+    print("K                           : " + str(k))
+    print("Average Approximated N      : " + str(final_approximated_n))
+    print("\n")
+    
+    now = datetime.datetime.now()
+    end = time.time()
+    print("Date and Time at program end: " + str(now))
+    print("Program Execution Time      : " + str(end - start) + " seconds")
+
+    choice_1 = (input("Do you want to run another trial? (Y/N) ")).upper()
+
+    while(choice_1 != 'N'):
+        print("\n")
+        test_num = int(input("How many tests do you want to run? "))
+        choice_2 = (input("Do you want to use the same values? (Y/N) ")).upper()
+        if (choice_2 != 'Y'):
+            n = int(input("N value: "))
+            k = int(input("K value: "))
+        
+        now = datetime.datetime.now()
+        start = time.time()
+        print("\nDate and Time at program start: " + str(now))
+
+        #approximated_n_sum = 0
+        results = list()
+        for i in range(math.floor(test_num/2)):
+            t1 = threading.Thread(target=algorithm, args=(n, k, results))
+            t2 = threading.Thread(target=algorithm, args=(n, k, results))
+            #approximated_n_sum += algorithm(n, k)
+            t1.start()
+            t2.start()
+        t1.join()
+        t2.join()
+        approximated_n_sum = sum(results)
+        final_approximated_n = math.floor(approximated_n_sum / test_num)
+        expected_value = math.floor(math.sqrt(n) * math.sqrt(math.pi/2))
+
+        print("\n\n\n")
+        print("# of Tests                  : " + str(test_num))
+        print("N                           : " + str(n))
+        print("K                           : " + str(k))
+        print("Average Approximated N      : " + str(final_approximated_n))
+        print("\n")
+        
+        now = datetime.datetime.now()
+        end = time.time()
+        print("Date and Time at program end: " + str(now))
+        print("Program Execution Time      : " + str(end - start) + " seconds")
+
+        choice_1 = (input("Do you want to run another trial? (Y/N) ")).upper()
+
+# Tests
+#test_wrapper2()
+
+
+def test_wrapper3():
+    '''
+    This test wrapper tests the accuracy of testing with a for-loop
+    instead of multithreading the tests.
     '''
     print("\n")
     test_num = int(input("How many tests do you want to run? "))
@@ -117,9 +305,16 @@ def test_wrapper2():
     print("\nDate and Time at program start: " + str(now))
 
     approximated_n_sum = 0
-    for i in range(test_num):
-        approximated_n_sum += algorithm(n, k)
-
+    results = list()
+    for i in range(math.floor(test_num)):
+        #t1 = threading.Thread(target=algorithm, args=(n, k, results))
+        #t2 = threading.Thread(target=algorithm, args=(n, k, results))
+        approximated_n_sum += algorithm(n, k, results)
+        #t1.start()
+        #t2.start()
+    #t1.join()
+    #t2.join()
+    #approximated_n_sum = sum(results)
     final_approximated_n = math.floor(approximated_n_sum / test_num)
     expected_value = math.floor(math.sqrt(n) * math.sqrt(math.pi/2))
 
@@ -150,9 +345,16 @@ def test_wrapper2():
         print("\nDate and Time at program start: " + str(now))
 
         approximated_n_sum = 0
-        for i in range(test_num):
-            approximated_n_sum += algorithm(n, k)
-
+        results = list()
+        for i in range(math.floor(test_num)):
+            #t1 = threading.Thread(target=algorithm, args=(n, k, results))
+            #t2 = threading.Thread(target=algorithm, args=(n, k, results))
+            approximated_n_sum += algorithm(n, k, results)
+            #t1.start()
+            #t2.start()
+        #t1.join()
+        #t2.join()
+        #approximated_n_sum = sum(results)
         final_approximated_n = math.floor(approximated_n_sum / test_num)
         expected_value = math.floor(math.sqrt(n) * math.sqrt(math.pi/2))
 
@@ -170,5 +372,4 @@ def test_wrapper2():
 
         choice_1 = (input("Do you want to run another trial? (Y/N) ")).upper()
 
-# Tests
-#test_wrapper2()
+#test_wrapper3()

@@ -21,8 +21,9 @@ class myThread (threading.Thread):
       self.counter = counter
    def run(self): #run() is called by invoking start(), which starts a new thread
       print("Starting " + self.name)
-      print_time(self.name, 5, self.counter)
+      print_time(self.name, 2, self.counter)
       print("Exiting " + self.name)
+      return 3
 
 def print_time(threadName, counter, delay):
    while counter:
@@ -42,3 +43,5 @@ thread1.start()
 thread2.start()
 
 print("Exiting Main Thread")
+
+thread1.join()
