@@ -25,12 +25,25 @@ Binary_Search_Best_K.py:
 	Contains many overnight test runs
 
 
+EstimateN.py:
+	The culmination of all our work during the six weeks from May 1, 2019
+	to June 10 2019. The function NewEstimateN is the final and most correct
+	base version (no speed upgrades) of our algorithm to approximate n
+	with only confirmation sampling. 
+
+
 Original_Test_Results_Compilation.ods:
 	A compilation of original test results from overnight tests without the analysis parts.
+
 
 README.txt:
 	Files gives a quick overview of directory contents.
 
+
 Sampling_Until_Duplicate.py:
 	Algorithm for duplicate confirmation sampling.
+
+
+Subprocess_Practice.py:
+	A file for learning and practicing the module.
 	
