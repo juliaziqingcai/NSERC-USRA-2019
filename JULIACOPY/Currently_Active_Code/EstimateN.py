@@ -175,11 +175,11 @@ def NewEstimateN_with_global_array(epsilon, delta, n):
     of those counters, and approximate n from there.
     '''
 
-    '''
+    
     now = datetime.datetime.now()
     start = time.time()
     print("\nDate and Time at program start: " + str(now))
-        '''
+        
 
 
     #delta = 1/4 # DO NOT UNCOMMENT, not necessary now that we have actual k*(epsilon) relationship
@@ -198,7 +198,7 @@ def NewEstimateN_with_global_array(epsilon, delta, n):
     approximate_n = (2 / math.pi) * ((approximate_mu - (2/3)) ** 2)
     # The approximation for n is reallllllly precise for larger n, BUT for smaller n, there is some error from this
 
-    '''
+    
     # CODE FOR ONLY ONE RUN OF THE ALGORITHM
     print("\n\n\n")
     print("----NewEstimateN Algorithm Run Report----\n")
@@ -211,14 +211,14 @@ def NewEstimateN_with_global_array(epsilon, delta, n):
     print("Mu~                         : " + str(approximate_mu))
     print("N~                          : " + str(approximate_n))
     print("\n")
-    '''
+    
 
-    '''
+    
     now = datetime.datetime.now()
     end = time.time()
     print("Date and Time at program end: " + str(now))
     print("Program Execution Time      : " + str(end - start) + " seconds")
-    '''
+    
 
     return approximate_n
 
@@ -433,4 +433,5 @@ print(timeit.repeat("NewEstimateN_original(0.1,0.2,1)", "from __main__ import Ne
 print("\n")
 print(timeit.repeat("NewEstimateN_with_global_array(0.1,0.2,1)", "from __main__ import NewEstimateN_with_global_array", repeat =3,  number = 1))
 '''
+NewEstimateN_with_global_array(0.01, 0.2, 100000000)
 
