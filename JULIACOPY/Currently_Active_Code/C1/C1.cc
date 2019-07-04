@@ -16,10 +16,7 @@ using std::mt19937_64;
 
 
 /*
-    ORIGINAL VERSION IN C++ OF NewEstimateN
-
-Ported to C++ for speed gains (faster by X100)
-Credits of actual code go to Luis Fernando Schultz Xavier da Silveira (PhD)
+    ORIGINAL VERSION IN OF COUPON COLLECTOR PROBLEM (SINGLE RUN)
 
 */
 
@@ -56,6 +53,7 @@ static double RSUD(int64_t N,int64_t k, std::vector<bool>& mark, RNG& rng)
     return double(result)/k;
 }
 
+// SINGLE RUN VERSION
 int main()
 {
     const double pi = std::acos(-1);
@@ -69,6 +67,9 @@ int main()
         cin >> delta;
         cout << "N Value: ";
         cin >> n;
+        int c;
+        cout << "C Value: ";
+        cin >> c;
 
         mt19937_64 rng;
         rng.seed(std::random_device()()); //seed the RNG
@@ -86,8 +87,36 @@ int main()
         double median = counters[l/2];
         double m = median - 2.0/3;
         double approximate_n = 2 / pi * m * m;
-        
-        cout << approximate_n << endl;
+
+        double m2 = approximate_n/(1-epsilon);
+        int64_t samples = int64_t(m2 * log(m2) + c * m2);
+
+        std::uniform_int_distribution<int64_t> dist(0, n-1);
+        int64_t numSeen = 0;
+        for (int64_t i=0; i<samples; ++i){
+            int64_t index = dist(rng);
+            if(!mark[index]){
+                numSeen++;
+                mark[index] = true;
+            }
+        }
+
+        bool seenAll = false;
+        if (numSeen == n){
+            seenAll = true;
+        }
+
+        cout << endl;
+        cout << "---RUN REPORT---" << endl;
+        cout << "Epsilon            : " << epsilon << endl;
+        cout << "Delta              : " << delta << endl;
+        cout << "N                  : " << n << endl;
+        cout << "N~                 : " << approximate_n << endl;
+        cout << "C                  : " << c << endl;
+        cout << "# Elements Seen    : " << numSeen << endl;
+        cout << "Seen all elements? : " << seenAll << endl;
+        cout << endl <<  "NOTE: 0 = false  !0 = true" << endl;
+
 
         return 0;
 

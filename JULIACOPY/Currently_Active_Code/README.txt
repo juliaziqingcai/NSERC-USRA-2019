@@ -8,9 +8,9 @@ LANGUAGE:	PYTHON
 VERSION:	3 and above
 
 ISSUES:		1) Python2 causes float division to become integer division
-			2) Python2 causes the terminal input to require quotation marks
+		2) Python2 causes the terminal input to require quotation marks
 			around user input or else it will cause a runtime error
-			3) Python3/Ubuntu/Something/??? doesn't like having to import and
+		3) Python3/Ubuntu/Something/??? doesn't like having to import and
 			use modules with '+' in the module/program/file name; causes
 			syntax error during runtime
 
@@ -25,6 +25,37 @@ Binary_Search_Best_K.py:
 	Contains many overnight test runs
 
 
+C1 Directory:
+	Contains:
+
+	-Makefile:
+		The Makfile for the C1.cc file. Options chosen for max optimization of
+		program perfomance.
+
+
+	-C1.cc:
+		An extension of the N1 and N2 estimating-n programs. The C series
+		is our version of the coupon collector's problem, based on our
+		approximations of n. C1 is the normal, single run program. 
+
+
+
+C2 Directory:
+	Contains:
+
+	-Makefile:
+		The Makfile for the C2.cc file. Options chosen for max optimization of
+				program perfomance.
+	-C2.cc:
+		A multiple-run tester version of the C1.cc program directly above.
+		Best used in conjunction with Linux file redirection commands for
+		testing purposes, as no C++ file i/o has been directly implemented
+		into the code.
+
+	-in.txt:
+		The intake file for C1.cc
+
+
 EstimateN.py:
 	The culmination of all our work during the six weeks from May 1, 2019
 	to June 10 2019. The function NewEstimateN is the final and most correct
@@ -32,27 +63,31 @@ EstimateN.py:
 	with only confirmation sampling. 
 
 
-Makefile:
-	The Makfile for the N1.cc file. Options chosen for max optimization of
-	program perfomance.
+N1 Directory:
+	Contains:
+
+	-Makefile:
+		The Makfile for the N1.cc file. Options chosen for max optimization of
+		program perfomance.
 
 
-N1.cc:
-	The C++ version of EstimateN.py, ported over for perfomance gains.
-	This will run 125 times faster than the Python file.
-	Should be run with the time command in terminal to really compare
-	performance, with the following commands:
-		make
-		time /tmp/N1
+	-N1.cc:
+		The C++ version of EstimateN.py, ported over for perfomance gains.
+		This will run 125 times faster than the Python file.
+		Should be run with the time command in terminal to really compare
+		performance, with the following commands:
+			make
+			time /tmp/N1
 
 
-N1_Commented.cc:
-	A commented version of the file directly above sharing the same name.
-	Since Luis created the upgrades to the original algorithm and
-	introduced many new tricks from C++11, there was much learning to be done,
-	which is shown in this file with lots of comments. This is a separate
-	file intended for learning purposes about both N1.cc and the options
-	used in the Makefile. It is not intended to run in any way shape or form.
+	-N1_Commented.cc:
+		A commented version of the file directly above sharing the same name.
+		Since Luis created the upgrades to the original algorithm and
+		introduced many new tricks from C++11, there was much learning to be done,
+		which is shown in this file with lots of comments. This is a separate
+		file intended for learning purposes about both N1.cc and the options
+		used in the Makefile. It is not intended to run in any way shape or form.
+
 
 N2 Directory:
 	Contains:

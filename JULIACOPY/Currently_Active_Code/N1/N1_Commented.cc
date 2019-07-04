@@ -6,8 +6,6 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
-#include <thread>
-#include <cassert>
 //using namespace std; DON'T DO THIS IT IS BAD PRACTICE
 using std::cin;
 using std::cout;
@@ -18,20 +16,16 @@ using std::mt19937_64;
 
 
 /*
-    MULTI-THREADED VERSION IN C++ OF NewEstimateN
+    ORIGINAL VERSION IN C++ OF NewEstimateN 
     (Commented by Julia for learning purposes)
 
-This copy of N2 is meant for LEARNING PURPOSES ONLY.
-It contains all the code of N2.cc, along with Julia's comments
+This copy of N1 is meant for LEARNING PURPOSES ONLY.
+It contains all the code of N1.cc, along with Julia's comments
 on how things work and why certain decisions were made.
-It also includes a commentary on the Makefile of N2.cc at the bottom,
+It also includes a commentary on the Makefile of N1.cc at the bottom,
 so this file is NOT meant to be run.
 
 Ported to C++ for speed gains (faster by X100)
-The multi-threading gives a speed boost of X2 (not X8, like the number
-of cores in the machine promised, most probably due to large amount of
-memory needed)
-
 Credits of actual code go to Luis Fernando Schultz Xavier da Silveira (PhD)
 
 */
@@ -50,7 +44,7 @@ static int64_t SUD(int64_t N, std::vector<bool>& mark, RNG& rng)
     //with integer values using a discrete probability function
     int64_t counter = 0;
     std::vector<int64_t> seen;
-     //set up vector of already seen indices, faster than initializing new vector every time
+    //set up vector of already seen indices, faster than initializing new vector every time
     seen.reserve(1024);
     //a hack to automatically allocate enough room for at least 1024 elements,
     //gives speed boost 
@@ -64,7 +58,7 @@ static int64_t SUD(int64_t N, std::vector<bool>& mark, RNG& rng)
         }else
             break;
     }
-    for(auto s: seen)
+    for(auto s: seen) 
     //range-based for loop, iterates over a range for a more intuitive loop
     //available since C++11
     //the keyword auto does type inference so that you can delcare variables without
@@ -75,62 +69,15 @@ static int64_t SUD(int64_t N, std::vector<bool>& mark, RNG& rng)
     return counter;
 }
 
-struct Slave {
-    //declares a struct that will allow us to collect results and perform all
-    //necessary tasks for incorporating multi-threading
-    std::thread thread;
-    //give each struct a thread
-    uint64_t result;
-    //allow the struct to store the eventual counter result
-    std::vector<bool> mark;
-    //each struct has its own array to sample from
-    mt19937_64 rng;
-    //each struct has its own rng to use so that no two threads
-    //have to access the same rng at the same time
-};
 
-static void task(int64_t N, int64_t rep, Slave& s) 
+template<typename RNG>
+static double RSUD(int64_t N,int64_t k, std::vector<bool>& mark, RNG& rng)
 {
-    //defines what the structs need to perform
-    uint64_t sum = 0;
-    //chose uint64_t to prevent integer overflow by havling the range
-    //since the expected counter should be bounded by sqrt(N) for each
-    //run of SUD
-    for (; rep != 0; --rep)
-    //for loop that only uses the number of repetitions
-        sum+= SUD(N, s.mark, s.rng);
-        //call upon the struct's fields to operate sampling until duplicate
-    s.result = sum;
-    //store the total results sum (like RSUD's total sum but for each struct individually)
-}
+    int64_t result = 0;
+    for (int64_t i=0; i<k; ++i) 
+        result += SUD(N, mark, rng);
 
-static double RSUD(int64_t N,int64_t k, std::vector<Slave>& slaves)
-{
-    int64_t workload = k / slaves.size();
-    //portion out the number of repetitions for each struct
-    bool first = true;
-    //flag for the first struct only
-    for (Slave& s: slaves) {
-      s.thread = std::thread(task, N, first ? workload + (k%slaves.size()) : workload, std::ref(s));
-      /* 
-      For the [std::thread(task, N, first ? workload + (k%slaves.size()) : workload,] part:
-        for each struct (slave), it will perform the task workload number of times,
-        except for the first struct, which will get the remainder because k (# of reps) cannot be guaranteed
-        to be a multiple of the number of threads/cores, so we decide with a conditional
-      For the std::ref(s) part: 
-        it is a wrapper function that encloses all the preceeding things to allow
-        the thread to actually work and start its job for each s
-      */
-      first = false;//turn the flag off
-    }
-    uint64_t grand_sum = 0;
-    for (Slave& s: slaves) {
-      s.thread.join();
-      //wait for all threads to terminate so that we don't miss any results
-      grand_sum+= s.result;
-      //collect all results into one grand total
-    }
-    return double(grand_sum)/k;
+    return double(result)/k;
 }
 
 int main()
@@ -151,31 +98,25 @@ int main()
         cout << "N Value: ";
         cin >> n;
 
-        auto num_cores = std::thread::hardware_concurrency();
-        //find out the number of available cores on the current machine
-        assert((num_cores != 0));
-        //ensure no errors occur from returning 0 cores
-        std::vector<Slave> slaves(num_cores);
-        //declares an array of structures where the multi-threading will happen
-        for (Slave& s: slaves) {
-            s.rng.seed(std::random_device()()); 
-            //seed the RNG witht the random device to become a truly RANDOM rng
-            //is a uniformly-distributed integer random number generator that 
-            //produces non-deterministic random numbers.
-            s.mark.resize(n, false);
-            //resizes the container so it contains n elements, makes sure each vector
-            //is initialized correctly for all threads
-        }
+        mt19937_64 rng; 
+        //A Mersenne Twister pseudo-random generator of 32-bit numbers with a state size of 19937 bits.
+        rng.seed(std::random_device()());
+         //seed the RNG witht the random device to become a truly RANDOM rng
+         //is a uniformly-distributed integer random number generator that 
+         //produces non-deterministic random numbers.
 
         int64_t best_k = int64_t(ceil(1.2632/ pow(epsilon, 2)));
         int64_t l = int64_t(ceil( 12 * log(1/delta)));
         //the two above are typecast to ensure no possibilty of overflow or typing issues related to
         //later calculations
 
+        std::vector<bool> mark(n, false);
+        //declares a vector of booleans, initialized with n elements, each element is the boolean false
+        //one can also declare such a vector's elements explicitly individually
+
         std::vector<double> counters(l);
         for (auto& counter: counters)
-            counter = RSUD(n, best_k, slaves);
-            //must pass in the structs (slaves) as the speed bottleneck is in the duplicate sampling
+            counter = RSUD(n, best_k, mark, rng);
 
         std::nth_element(counters.begin(), counters.begin()+l/2, counters.end());
         //partial sorting algorithm that ensures that the nth element is pointed to correctly
@@ -194,11 +135,10 @@ int main()
     }
 }
 
-
 //*************************MAKEFILE PORITION***********************************
 
-N2:	N2.cc
-	c++ -std=c++14 -o /tmp/N2 N1.cc -march=native -O2 -pipe -fomit-frame-pointer -fwhole-program
+N1:	N1.cc
+	c++ -std=c++14 -o /tmp/N1 N1.cc -march=native -O2 -pipe -fomit-frame-pointer -fwhole-program
 
 /*
 
@@ -251,4 +191,3 @@ c++:
 
 clean:
 	rm -f main
-

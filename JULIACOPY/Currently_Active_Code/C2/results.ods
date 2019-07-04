@@ -1,0 +1,90 @@
+
+Epsilon Value: Delta Value: N Value: C Value: Number of tests: 
+---RUN REPORT---
+Epsilon            : 0.1
+Delta               : 0.1
+N                    : 1000000
+N~                  : 1.00232e+06
+C                    : 1
+# of Repetitions   : 50
+# Successes        : 1
+Pr[Success]        : 0.02
+Seconds Taken      : 14.7022
+
+Epsilon Value: Delta Value: N Value: C Value: Number of tests: 
+---RUN REPORT---
+Epsilon            : 0.1
+Delta               : 0.1
+N                    : 1000000
+N~                  : 1.01046e+06
+C                    : 1
+# of Repetitions   : 50
+# Successes        : 1
+Pr[Success]        : 0.02
+Seconds Taken      : 14.7841
+
+Epsilon Value: Delta Value: N Value: C Value: Number of tests: 
+---RUN REPORT---
+Epsilon            : 0.1
+Delta               : 0.1
+N                    : 1000000
+N~                  : 1.06112e+06
+C                    : 1
+# of Repetitions   : 50
+# Successes        : 50
+Pr[Success]        : 1
+Seconds Taken      : 16.493
+
+Epsilon Value: Delta Value: N Value: C Value: Number of tests: 
+---RUN REPORT---
+Epsilon            : 0.1
+Delta               : 0.1
+N                    : 1000000
+N~                  : 1.02862e+06
+C                    : 1
+# of Repetitions   : 50
+# Successes        : 1
+Pr[Success]        : 0.02
+Seconds Taken      : 15.2465
+0
+1
+2
+3
+4
+5
+
+Epsilon Value: Delta Value: N Value: C Value: Number of tests: 
+---RUN REPORT---
+Epsilon            : 0.1
+Delta               : 0.1
+N                    : 1000000
+N~                  : 1.00506e+06
+C                    : 1
+# of Repetitions   : 50
+# Successes        : 1
+Pr[Success]        : 0.02
+Seconds Taken      : 15.5438
+
+Epsilon Value: Delta Value: N Value: C Value: Number of tests: 
+---RUN REPORT---
+Epsilon            : 0.1
+Delta               : 0.1
+N                    : 1000000
+N~                  : 1.00704e+06
+C                    : 1
+# of Repetitions   : 50
+# Successes        : 48
+Pr[Success]        : 0.96
+Seconds Taken      : 15.9654
+
+Epsilon Value: Delta Value: N Value: C Value: Number of tests: 
+---RUN REPORT---
+Epsilon            : 0.1
+Delta               : 0.1
+N                    : 1000000
+N~                  : 1.02829e+06
+C                    : 0.5
+# of Repetitions   : 50
+# Successes        : 47
+Pr[Success]        : 0.94
+Seconds Taken      : 15.5172
