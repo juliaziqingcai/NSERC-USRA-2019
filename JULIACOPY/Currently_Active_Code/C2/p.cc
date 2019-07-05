@@ -80,7 +80,6 @@ static bool seenAll(int64_t N, std::vector<bool>& mark, RNG& rng, int64_t sample
 }
 
 
-
 template<typename RNG>
 static void couponCollector(int64_t N, double epsilon, double delta, double c, int reps, RNG& rng){
 
@@ -93,11 +92,11 @@ static void couponCollector(int64_t N, double epsilon, double delta, double c, i
     int64_t best_k = int64_t(ceil(1.2632/ pow(epsilon, 2)));
     int64_t l = int64_t(ceil( 12 * log(1/delta)));
 
-    std::vector<bool> mark(N, false);
+    std::vector<bool> mark(n, false);
 
     std::vector<double> counters(l);
     for (auto& counter: counters)
-        counter = RSUD(N, best_k, mark, rng);
+        counter = RSUD(n, best_k, mark, rng);
 
     std::nth_element(counters.begin(), counters.begin()+l/2, counters.end());
     double median = counters[l/2];
@@ -112,7 +111,7 @@ static void couponCollector(int64_t N, double epsilon, double delta, double c, i
 
     int64_t successes = 0;
     for (int64_t i=0; i<reps; ++i){
-        bool result = seenAll(N, mark, rng, samples);
+        bool result = seenAll(n, mark, rng, samples);
         if(result){
             successes++;
             //cout << successes << endl;
@@ -128,7 +127,7 @@ static void couponCollector(int64_t N, double epsilon, double delta, double c, i
     cout << "---RUN REPORT---" << endl;
     cout << "Epsilon            : " << epsilon << endl;
     cout << "Delta              : " << delta << endl;
-    cout << "N                  : " << N << endl;
+    cout << "N                  : " << n << endl;
     cout << "N~                 : " << approximate_n << endl;
     cout << "M~                 : " << m2 << endl;
     cout << "C                  : " << c << endl;
@@ -139,18 +138,15 @@ static void couponCollector(int64_t N, double epsilon, double delta, double c, i
 }
 
 
-
 //MULTIPLE RUNS AND TERMINAL TESTING VERSION
 int main()
 {   
     int64_t N;
     double epsilon = 0.01;
-    int reps;
+    int reps = 2;
     cout << endl;
     cout << "N Value: ";
     cin >> N;
-    cout << "# of Repetitions: ";
-    cin >> reps;
 
     std::vector<double> deltas{0.9, 0.7, 0.5, 0.3, 0.1};
     std::vector<double> cs{0.25, 0.5, 1, 2, 3, 4};
@@ -165,90 +161,3 @@ int main()
     return 0;
 
 }
-
-
-
-/*
-//MULTIPLE RUNS AND TERMINAL TESTING VERSION
-int main()
-{
-    const double pi = std::acos(-1);
-
-    cout << endl;
-    double epsilon;
-    cout << "Epsilon Value: ";
-    while (std::cin >> epsilon) {
-        int64_t n;
-        double delta;
-        cout << "Delta Value: ";
-        cin >> delta;
-        cout << "N Value: ";
-        cin >> n;
-        double c;
-        cout << "C Value: ";
-        cin >> c;
-        int reps;
-        cout << "Number of tests: ";
-        cin >> reps;
-
-        std::clock_t start;
-        double duration;
-        start = std::clock();
-
-        mt19937_64 rng;
-        rng.seed(std::random_device()()); //seed the RNG
-
-        int64_t best_k = int64_t(ceil(1.2632/ pow(epsilon, 2)));
-        int64_t l = int64_t(ceil( 12 * log(1/delta)));
-
-        std::vector<bool> mark(n, false);
-
-        std::vector<double> counters(l);
-        for (auto& counter: counters)
-            counter = RSUD(n, best_k, mark, rng);
-
-        std::nth_element(counters.begin(), counters.begin()+l/2, counters.end());
-        double median = counters[l/2];
-        double m = median - 2.0/3;
-        double approximate_n = 2 / pi * m * m;
-
-
-
-        double m2 = approximate_n/(1-epsilon);
-        int64_t samples = int64_t(m2 * log(m2) + c * m2);
-        //int64_t samples = int64_t(n * log(n) + c * n); //for actual n
-
-        int64_t successes = 0;
-        for (int64_t i=0; i<reps; ++i){
-            bool result = seenAll(n, mark, rng, samples);
-            if(result){
-                successes++;
-                //cout << successes << endl;
-            }
-        }
-
-        double success_prob = double(successes) / double(reps);
-
-        duration = (std::clock() - start) / (double) CLOCKS_PER_SEC;
-
-        
-        cout << endl;
-        cout << "---RUN REPORT---" << endl;
-        cout << "Epsilon            : " << epsilon << endl;
-        cout << "Delta              : " << delta << endl;
-        cout << "N                  : " << n << endl;
-        cout << "N~                 : " << approximate_n << endl;
-        cout << "M~                 : " << m2 << endl;
-        cout << "C                  : " << c << endl;
-        cout << "# of Repetitions   : " << reps << endl;
-        cout << "# Successes        : " << successes << endl;
-        cout << "Pr[Success]        : " << success_prob << endl;
-        cout << "Seconds Taken      : " << duration << endl;
-
-
-
-        return 0;
-
-    }
-}
-*/
