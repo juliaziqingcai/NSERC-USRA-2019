@@ -20,6 +20,40 @@ using std::mt19937_64;
 /*
     TESTING VERSION OF COUPON COLLECTOR'S PROBLEM (HAS LOOPS)
 
+    The coupon collector's problem looks at how many times one has
+    to sample out of a set before every element has been seen.
+    It states that for a set S of size n:
+
+    E(#samples to take until all elements see) = n * nth Harmonic number <= nln(n) + n
+
+    This expected value cannot be beaten.
+
+
+    This modified version uses the EstimateN algorithm for an approximation of N
+    so that the question becomes: 
+    
+    In a set of unknown size, how many times
+    must one sample from it before we are reasonably sure that all
+    elements have been seen?
+
+    The algorithm goes as follows:
+
+    1. Compute n~ using EstimateN algorithm/program
+    2. Calculate an m~ from m~ = (n~)/(1-epsilon)
+    3. Based on knowing the actual Coupon Collector's problem,
+    we sample m~ * ln(m~) + C * m~ elements before we are reasonably
+    sure that we have seen all elements. 
+    4. We check the number of seen elements versus actual set size n.
+
+    This version is the one used for terminal testing to see what a good
+    value for the constant C might for number of samples to take, and to observe
+    the effect the size of C and delta have on the probability of success.
+
+    From testing, we see that as C gets larger (0.25->4), we approach
+    Pr[Success] = 1 with a positive correlation, and that as delta
+    gets smaller (0.9->0.1), there is a negligible decrease in
+    Pr[Success], showing a positive correlation.
+
 */
 
 template<typename RNG>
