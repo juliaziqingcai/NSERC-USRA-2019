@@ -1,5 +1,4 @@
-README:		For all currently in-active (not in use OR not of interest at the moment)
-		Summer 2019 NSERC-USRA Folder Program files
+README:		For all folders in the JULIACOPY of the NSERC-USRA-2019 GitHub repository
 
 AUTHORS:	Julia Cai, ALexa de Grandmont
 
@@ -22,29 +21,29 @@ ISSUES:		1) Python2 causes float division to become integer division
 
 ----------------------------------------FILES--------------------------------------------------	
 
-Coupon_Collector Directory:
+JULIACOPY Directory:
 	Contains:
 
-	All directories and files related to the Coupon Collector's Problem
+	Currently_Active_Code Directory:
+		Contains:
+
+		All directories and files related to any current paper, problem, algorithm,
+		or subject of interest. These files are the ones that are currently in
+		development, subject to change, or are important/related to the ongoing
+		problem(s) at hand.
 
 
-EstimateN Directory:
-	Contains:
+	Inactive_Code Directory:
+		Contains:
 
-	All files related to the refinement of the final version of the EstimateN
-	algorithm, including the original Python version, the test files related to
-	discovery the exact relationship between epsilon and k (#samples), and the
-	2 versions ported to C++ for perfomance optimization.
+		All files related to problems/algorithms that are finished and completed.
 
 
-EstimateN_Experimental_Prototypes Directory:
-	Contains:
+	PDFs Directory:
+		Contains:
 
-	All files related to the development and search for an algorithm that
- 	could reliably approximate set size only through duplicate confirmation 
-	sampling with replacement. They are all prototypes and only meant to
-	show the journey to algorithm in the files in the EstimateN directory.
-	READ ONLY
+		Reading-heavy files that contain either papers of note/interest/possible help,
+		or reports relating to what has been done.
 
 
 	-README.txt:
