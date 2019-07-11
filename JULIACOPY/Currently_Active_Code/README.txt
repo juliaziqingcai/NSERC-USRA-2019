@@ -2,7 +2,7 @@ README:		For all currently active Summer 2019 NSERC-USRA Folder Program files
 
 AUTHORS:	Julia Cai, Alexa de Grandmont
 
-LAST UPDATE:	June 12th, 2019
+LAST UPDATE:	July 11th, 2019
 
 LANGUAGE:	PYTHON
 VERSION:	3 and above

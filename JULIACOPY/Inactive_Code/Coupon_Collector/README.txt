@@ -23,28 +23,19 @@ ISSUES:		1) Python2 causes float division to become integer division
 ----------------------------------------FILES--------------------------------------------------	
 
 Coupon_Collector Directory:
-	Contains:
+	C1 Directory:
+		Contains:
 
-	All directories and files related to the Coupon Collector's Problem
-
-
-EstimateN Directory:
-	Contains:
-
-	All files related to the refinement of the final version of the EstimateN
-	algorithm, including the original Python version, the test files related to
-	discovery the exact relationship between epsilon and k (#samples), and the
-	2 versions ported to C++ for perfomance optimization.
+		All files related to the original C++ version of the modified Coupon
+		Collector's Problem that integrates the EstimateN algorithm. 
 
 
-EstimateN_Experimental_Prototypes Directory:
-	Contains:
+	C2 Directory:
+		Contains:
 
-	All all files related to the development and search for an algorithm that
- 	could reliably approximate set size only through duplicate confirmation 
-	sampling with replacement. They are all prototypes and only meant to
-	show the journey to algorithm in the files in the EstimateN directory.
-	READ ONLY
+		All files related to testing the modified Coupon Collector's Problem
+		to discover the relationships between epsilon, delta, an unknown constant
+		C, and the probability of successfully seeing all elements in the set.
 
 
 	-README.txt:
