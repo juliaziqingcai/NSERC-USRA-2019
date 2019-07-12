@@ -3,9 +3,9 @@ README:		For all PDFs, papers, and reports of interest/related
 
 AUTHORS:	Various
 
-LAST UPDATE:	July 11th, 2019
+LAST UPDATE:	July 12th, 2019
 
-FILE TYPES:	.docx, .odt, .pdf, .txt
+FILE TYPES:	.docx, .odt, .pdf, .ps.gz, .txt
 
 
 ----------------------------------------FILES--------------------------------------------------	
@@ -32,6 +32,9 @@ PDFs Directory:
 		An explanation and overview of how Chernoff Bounds/Inequalities
 		work.
 
+	-LEDA_manula.ps.gz:
+		Documentation for the LEDA software library for computational geometry
+		related functions. Recommended by Michiel
 	-README.txt:
 		Files gives a quick overview of directory contents.
 

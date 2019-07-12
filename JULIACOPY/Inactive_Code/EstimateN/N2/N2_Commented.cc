@@ -27,7 +27,7 @@ on how things work and why certain decisions were made.
 It also includes a commentary on the Makefile of N2.cc at the bottom,
 so this file is NOT meant to be run.
 
-Ported to C++ for speed gains (faster by X100)
+Ported to C++ for speed gains (faster by X125)
 The multi-threading gives a speed boost of X2 (not X8, like the number
 of cores in the machine promised, most probably due to large amount of
 memory needed)
@@ -55,6 +55,7 @@ static int64_t SUD(int64_t N, std::vector<bool>& mark, RNG& rng)
     //a hack to automatically allocate enough room for at least 1024 elements,
     //gives speed boost 
     while(true){//for(;;) //alternate way of infinite loop
+    //semi-colon version is faster (?) than infinite while loop
         int64_t index = dist(rng);
         //calls the initialized distribution to spit out a truly random number from range
         counter++;
