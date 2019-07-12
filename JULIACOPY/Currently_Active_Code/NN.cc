@@ -92,7 +92,7 @@ static int compar(const point *p1, const point *p2)//WARNING: MAY NOT WORK WITH 
 {
     if ((*p1).x_prime < (*p2).x_prime)
         return -1;
-
+    if ((*p1).)
     else
         return 1;
     
