@@ -197,11 +197,11 @@ int main()
 
 
 //*************************MAKEFILE PORITION***********************************
+/*
 
 N2:	N2.cc
 	c++ -std=c++14 -o /tmp/N2 N1.cc -march=native -O2 -pipe -fomit-frame-pointer -fwhole-program
 
-/*
 
 c++:
     The compiler chosen is c++ here because the lab machines and Julia's VMs are ALL run with Ubuntu.
@@ -246,10 +246,11 @@ c++:
 
 -fwhole-program:
     Forces the compiler to acknowledge this one file as the whole program, and therefore forces more
-    aggressive optimization since there is nothing else to juggle/consider
-*/
+    aggressive optimization since there is nothing else to juggle/conside
 
 
 clean:
 	rm -f main
+
+*/
 
