@@ -3,7 +3,7 @@ README:		For all currently in-active (not in use OR not of interest at the momen
 
 AUTHORS:	Julia Cai, ALexa de Grandmont
 
-LAST UPDATE:	July 11th, 2019
+LAST UPDATE:	July 18th, 2019
 
 LANGUAGE:	PYTHON
 VERSION:	3 and above
@@ -23,6 +23,11 @@ ISSUES:		1) Python2 causes float division to become integer division
 ----------------------------------------FILES--------------------------------------------------	
 
 Coupon_Collector Directory:
+	Contains:
+
+	All directories and files related to the Coupon Collector's Problem
+
+
 	C1 Directory:
 		Contains:
 

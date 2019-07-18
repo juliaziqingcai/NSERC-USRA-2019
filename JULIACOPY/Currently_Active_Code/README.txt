@@ -2,7 +2,7 @@ README:		For all currently active Summer 2019 NSERC-USRA Folder Program files
 
 AUTHORS:	Julia Cai, Alexa de Grandmont
 
-LAST UPDATE:	July 12th, 2019
+LAST UPDATE:	July 18th, 2019
 
 LANGUAGE:	PYTHON
 VERSION:	3 and above
@@ -19,14 +19,12 @@ ISSUES:		1) Python2 causes float division to become integer division
 Current_Active_Code directory:
 	Contains:
 	
-	-Makefile:
-		The Makefile for the NN.cc file. Options for maximum perfomance
-		optimization chosen.
+	NN Directory:
+		Contains:
+		
+		All files related to the Nearest Neighbor Problem and the
+		Simple Randomized Algorithm from the related CCCG 2019 Paper.
 
-	-NN.cc:
-		Program file based off the CCCG-2019 paper (also found in the PDFs folder)
-		for a randomized algorithm to address the all nearest neighbors problem.
-		Currently in development and a total mess.
 
 	-README.txt:
 		Files gives a quick overview of directory contents.

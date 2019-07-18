@@ -27,18 +27,32 @@ using std::mt19937_64;
 
     The algorithm presented works as follows:
 
-    For each input point p in a set P = {p1, ..., pn}
-        1. pick a random unit vector u (line)
-        2. for i from 1
-    
+        1.  Pick a random unit vector u (line) by picking a random angle
+            to form a line y = tan(angle)x
+        2.  Project the points onto the unit vector line,
+            giving a projected point and an original point.
+        3.  Sort/order the points in terms of their projected x-values
+        4.  For each point in the set, check other points
+            based on their projected distance to p while keeping
+            the minimum found Euclidean distance relative to p.
+        5.  The search for NN terminates if either all points have
+            been checked, OR the algorithm encounters a Euclidean distance
+            larger than the minimum found.
+
+
+
+    New tools learned in the writing of this code:
+        std::set, std::pair, std::sort customization, when to use auto vs. auto&, 
+        difficulty of implementing qsort,
 
 
 */
 
+
 static double get_value(char const *prompt)
 /*
     Function for getting numerical input from user to modularize
-    and reducing repetition.
+    and reduce repetition.
 
 */
 {
@@ -68,6 +82,25 @@ struct point
 };
 
 
+template<typename RNG>
+static void get_angles(int64_t num_angles, std::set<double>& angles, RNG& rng)
+/*
+    Generates a given number of unique angles.
+*/
+{
+    const double pi = std::acos(-1);
+
+    std::uniform_real_distribution<double> dist(-pi/2, pi/2); //get random angle
+
+    while(angles.size() < num_angles){
+        double angle = dist(rng);
+        while(angle == (-pi/2))
+            angle = dist(rng); //error-check against inclusive lower bound
+        angles.insert(angle);
+    }
+}
+
+
 static bool compare (point p1, point p2)
 /*
     Comparison function for std::sort() to rank points by their
@@ -79,21 +112,26 @@ static bool compare (point p1, point p2)
 */
 {
     return (p1.x_prime < p2.x_prime);
-
 }
 
 
 static double euclidean_distance(point p1, point p2)
 //Calculates and returns the square of the euclidean distance between two points
 {
-    return pow((p1.x - p2.x), 2) + pow((p1.y - p2.y), 2);
+    double diff_x = p1.x - p2.x;
+    double diff_y = p1.y - p2.y;
+
+    return (diff_x * diff_x) + (diff_y * diff_y);
 }
 
 
 static double projected_distance(point p1, point p2)
 //Calculates and returns the square of the projected distance between two points
 {
-    return pow((p1.x_prime - p2.x_prime), 2) + pow((p1.y_prime - p2.y_prime), 2);
+    double diff_x_prime = p1.x_prime - p2.x_prime;
+    double diff_y_prime = p1.y_prime - p2.y_prime;
+
+    return (diff_x_prime * diff_x_prime) + (diff_y_prime * diff_y_prime);
 }
 
 
@@ -192,11 +230,10 @@ int main(){
 
     //ask user for range values 
 
-    const double pi = std::acos(-1);
-
     double upper_bound = get_value("Coordinate upper bound(real): ");
     double lower_bound = get_value("Coordinate lower bound(real): "); //upper/lower coordinate bounds
     int64_t n = (int64_t) std::round(get_value("Number of points to generate(int): ")); // n = #points
+    int64_t num_angles = (int64_t) std::round(get_value("Number of angles to generate(int); "));
 
     cout << "\n\n ----RUN REPORT----\n";
     cout << "Coordinate Upper Bound: " << upper_bound << "\n";
@@ -207,7 +244,7 @@ int main(){
     mt19937_64 rng;
     rng.seed(std::random_device()()); 
     // 1st pair of parentheses to activate random_device, 2nd pair to all random_device
-    std::vector<point> points; //vector of point struct pointers
+    std::vector<point> points; //vector of point structs (less error-prone than pointers)
 
     //POINT GENERATION STARTS
     std::set<std::pair<double, double>> coordinates; //set made to check for duplicates
@@ -247,35 +284,51 @@ int main(){
         coordinates.insert(p);
     }
 
-    for(auto coor: coordinates){
+    for(auto coor: coordinates){//put coordinates into points
         point p;
         p.x = coor.first;
         p.y = coor.second;
         points.push_back(p);
     }
 
-    std::uniform_real_distribution<double> dist2(-pi/2, pi/2); //get random angle
-    double angle = dist2(rng);
-    while(angle == (-pi/2))
-        angle = dist2(rng); //error-check against inclusive lower bound
-    double a = tan(angle); //random angle is y = tan(a)
+    std::set<double> angles;//picked a set due to only needing the values
+    get_angles(num_angles, angles, rng);
 
-    for(auto& p : points){
-        p.x_prime = (p.x + (p.y * a)) / ((a * a) + 1);
-        p.y_prime = p.x_prime * a;
+    for(auto angle: angles){
+        
+        double a = tan(angle); //random angle is y = tan(a)
+
+        for(auto& p : points){
+            //way to calculate prime coordinates based on equation of the line by simple algebra proof
+            p.x_prime = (p.x + (p.y * a)) / ((a * a) + 1);
+            p.y_prime = p.x_prime * a;
+        }
+
+        std::sort(points.begin(), points.end(), compare);//sort the points by x_prime values
+
+        int64_t counter = 0;//counter to compare # of while loop iterationx to E[X]
+
+        for(int64_t i = 0; i<n; ++i) // THE GIANT FOR LOOP OF DOOM BEGINS
+            get_NN(n, points, i, counter);
+
+        //cout << "\n------------------------------------------------------\n";
+
+        /*
+        for(auto p: points){
+            cout << "\nCurrent Point is: (" << p.x << ", " << p.y << ") \n";
+            cout << "NN Point is     : (" << (*(p.NN)).x << ", " << (*(p.NN)).y << ") \n";
+        }*/
+
+        //cout << "\nAngle used                      : " << angle << "\n";
+        //cout << "Total # of While Loop Iterations: " << counter << "\n";
+        //cout << "E[# of While Loop Iteractions]  : " << n * (std::sqrt(n)) << "\n";
+        cout << "\n";
+        cout << counter;
+
     }
 
+    cout << "\n\n" << n* (std::sqrt(n)) << "\n";
 
-    std::sort(points.begin(), points.end(), compare);
-
-    int64_t counter = 0;
-
-    for(int64_t i = 0; i<n; ++i) // THE GIANT FOR LOOP OF DOOM BEGINS
-        get_NN(n, points, i, counter);
-
-    cout << "\nAngle used                      : " << angle << "\n";
-    cout << "\nTotal # of While Loop Iterations: " << counter << "\n";
-    cout << "E[# of While Loop Iteractions]  : " << n * (std::sqrt(n)) << "\n";
 
     //TODO: Implement multiple angles for the same set of points (ask user for how many). Just a for loop with update primes and getNN calls
     //TODO: Update documentation & commenting & Makefile, the push to repo when completely done
