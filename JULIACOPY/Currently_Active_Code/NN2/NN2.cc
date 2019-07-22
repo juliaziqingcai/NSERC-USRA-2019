@@ -18,12 +18,32 @@ using std::mt19937_64;
 
 
 /*
+    (MODIFIED BOX VERSION) 
     Nearest-Neighbor Program based on a CCCG-2019 Paper:
     A Simple Randomized Algorithm for ALl Nearest Neighbors
     by Soroush Ebadian, Hamid Zarrabi-Zadeh
 
     Given a set P of n points in the plane, the all nearest neighbors
     problem asks for finding the closest poist in P for each point in the set.
+
+
+    MODIFICATION TO ORIGINAL:
+
+        The points must generated in boxes, with the condition that the
+        NN of all the points within each box is also within the same box
+        (distance between boxes > diagonal of boxes).
+
+        The purpose is to test if this searching takes longer (more while
+        loop iterations) than the E[x] = n * sqrt(n) due to some random
+        lines causing all the projected points to fall very close
+        together (eg. boxes arranged vertically with a hozontal line chosen).
+        Theoretically, all the points would then have to be walked along due
+        to the box constraints AND the closeness of the projected points.
+
+        -Coordinate bounds are no longer asked for, as they are generated as
+        [0, 3i) (lower left corner) to [1, 3i+1) (upper right corner)
+        -Asks for number of boxes
+
 
     The algorithm presented works as follows:
 
@@ -44,6 +64,18 @@ using std::mt19937_64;
     New tools learned in the writing of this code:
         std::set, std::pair, std::sort customization, when to use auto vs. auto&, 
         difficulty of implementing qsort,
+
+    
+    Things Learned from Box Experiment:
+
+        The higher and narrower and more boxes we stack vertically, the closer to
+        true horizontal angles we have to get in order to get many while loop iteration.
+        This means that most angles are 'good' and can execute in much less time than
+        the expected value, BUT when it does get a 'bad' angle (this range narrows the 
+        higher we stack boxes, i.e. more boxes) the execution takes much, MUCH longer
+        (# while loop iterations >>>> E[x]). This makes sense since projecting onto
+        any random line will produce large distance differences for higher box stacks,
+        so we have to check less neighbors (sometimes only the nearest!).
 
 
 */
@@ -76,7 +108,7 @@ struct point
     double y;
     double x_prime;
     double y_prime;
-    struct point *NN; //pointer only after sorting
+    point *NN; //pointer only after sorting
     //NOTE: in C++, it's type *ptr, whereas in C, it's type* ptr
     bool operator() (point p1, point p2) {return (p1.x_prime < p2.x_prime); }
 };
@@ -135,7 +167,7 @@ static double projected_distance(point p1, point p2)
 }
 
 
-static void get_NN(int64_t n, std::vector<point>& points, int64_t i, int64_t& counter)
+static void get_NN(std::vector<point>& points, int64_t i, int64_t& counter)
 /*
     Walks through the sorted vector of points to find the Nearest Neighbour (NN)
     of the point at index i. Checks through all edge cases for travelling
@@ -148,7 +180,7 @@ static void get_NN(int64_t n, std::vector<point>& points, int64_t i, int64_t& co
 {
     // STEP 1: INITIALIZE
     // left, right, & current are indices for the sorted projected points
-       
+    size_t n = points.size();
     int64_t left = i-1;
     int64_t right = i+1;
     int64_t current;
@@ -228,68 +260,65 @@ int main(){
 
     */
 
+    const double pi = std::acos(-1);
+
     //ask user for range values 
 
-    double upper_bound = get_value("Coordinate upper bound(real): ");
-    double lower_bound = get_value("Coordinate lower bound(real): "); //upper/lower coordinate bounds
-    int64_t n = (int64_t) std::round(get_value("Number of points to generate(int): ")); // n = #points
-    int64_t num_angles = (int64_t) std::round(get_value("Number of angles to generate(int); "));
+    int64_t num_boxes = 1000;
+    int64_t points_per_box = (int64_t) std::round(get_value("Number of points per box to generate(int): ")); 
+    int64_t num_angles = (int64_t) std::round(get_value("Number of angles to generate(int): "));
+    int64_t n = num_boxes * points_per_box;
+
+    //FIXED (CONSTANT) X-COORDINATE BOX BOUNDS
+    double x_lower_bound = 0;
+    double x_upper_bound = 0.01;
 
     cout << "\n\n ----RUN REPORT----\n";
-    cout << "Coordinate Upper Bound: " << upper_bound << "\n";
-    cout << "Coordinate Lower Bound: " << lower_bound << "\n";
-    cout << "N                     : " << n << "\n";
-
-    //set up RNG
+    cout << "Number of Boxes : " << num_boxes << "\n";
+    cout << "Points per box  : " << points_per_box << "\n";
+    cout << "Number of Angles: " << num_angles << "\n";
+    cout << "N               : " << n << "\n";
+    cout << "E[# while loops]: " << n* std::sqrt(n) << "\n";
+    
+    
     mt19937_64 rng;
     rng.seed(std::random_device()()); 
-    // 1st pair of parentheses to activate random_device, 2nd pair to all random_device
-    std::vector<point> points; //vector of point structs (less error-prone than pointers)
 
     //POINT GENERATION STARTS
+
     std::set<std::pair<double, double>> coordinates; //set made to check for duplicates
-
-    /*
-    // TEST COORDINATES N=8 (MAKE SURE TO ENTER 8 FOR N IN TERMINAL)
-    std::pair<double, double> p1 = std::make_pair(4, 3);
-    coordinates.insert(p1);
-
-    std::pair<double, double> p2 = std::make_pair(8,0);
-    coordinates.insert(p2);
     
-    std::pair<double, double> p3 = std::make_pair(1,1);
-    coordinates.insert(p3);
+    for(int64_t i=0; i<num_boxes; ++i){
 
-    std::pair<double, double> p4 = std::make_pair(3, 2);
-    coordinates.insert(p4);
+        // SET Y-COORDINATE BOX BOUNDS TO ENSURE DISTANCE OUTSIDE BOXES > DISTANCE INSIDE BOXES
+        double y_lower_bound = 3 * i;
+        double y_upper_bound = (3 * i) + 0.01; 
 
-    std::pair<double, double> p5 = std::make_pair(0, 0);
-    coordinates.insert(p5);
+        // SEPARATE DISTRIBUTIONS TO GENERATE X, Y VALUES
+        std::uniform_real_distribution<double> get_x(x_lower_bound, x_upper_bound);
+        std::uniform_real_distribution<double> get_y(y_lower_bound, y_upper_bound);
 
-    std::pair<double, double> p6 = std::make_pair(9, 1);
-    coordinates.insert(p6);
+        while(coordinates.size() < ((i+1) * (points_per_box)))
+        //LARGE ERROR HERE BEFORE FROM NOT CONSIDERING HOW TO UPDATE UPPER SIZE BOUND WITH EACH NEW BOX
+        //DIFFERENT FROM SINGLE BOX VERSION BY A LOTTTT
+        //ALSO THE SOURCE OF A DOUBLE FREE ERROR! ACHIEVEMENT!!
+            coordinates.insert(std::make_pair(get_x(rng), get_y(rng)));
 
-    std::pair<double, double> p7 = std::make_pair(1.5, 9);
-    coordinates.insert(p7);
-
-    std::pair<double, double> p8 = std::make_pair(0.5, 8);
-    coordinates.insert(p8);*/
-
-    
-    
-    std::uniform_real_distribution<double> dist(lower_bound, upper_bound);
-    while(coordinates.size() < n){//fill the set
-        std::pair<double, double> p;
-        p = std::make_pair (dist(rng), dist(rng));
-        coordinates.insert(p);
+        //cout << "\nNumber of current coordinates generated: " << coordinates.size() << "\n";
+        
     }
 
-    for(auto coor: coordinates){//put coordinates into points
+    std::vector<point> points;
+    for(auto coor: coordinates){
         point p;
         p.x = coor.first;
         p.y = coor.second;
+        p.NN = nullptr;
         points.push_back(p);
+    
     }
+    //cout << "Number of current points generated: " << points.size() << "\n";
+
 
     std::set<double> angles;//picked a set due to only needing the values
     get_angles(num_angles, angles, rng);
@@ -309,10 +338,9 @@ int main(){
         int64_t counter = 0;//counter to compare # of while loop iterationx to E[X]
 
         for(int64_t i = 0; i<n; ++i) // THE GIANT FOR LOOP OF DOOM BEGINS
-            get_NN(n, points, i, counter);
+            get_NN(points, i, counter);
 
-        //cout << "\n------------------------------------------------------\n";
-
+        cout << "\n------------------------------------------------------\n";
         /*
         for(auto p: points){
             cout << "\nCurrent Point is: (" << p.x << ", " << p.y << ") \n";
@@ -322,12 +350,18 @@ int main(){
         //cout << "\nAngle used                      : " << angle << "\n";
         //cout << "Total # of While Loop Iterations: " << counter << "\n";
         //cout << "E[# of While Loop Iteractions]  : " << n * (std::sqrt(n)) << "\n";
+
+        cout << "\nAngle used      : " << (angle * 180 / pi) << "\n";
+        cout << "Counter         : " << counter << "\n";
+
+        /*
+        //USED FOR TERMINAL TESTING
         cout << "\n";
-        cout << counter;
+        cout << counter;*/
 
     }
 
-    cout << "\n\n" << n* (std::sqrt(n)) << "\n";
+    //cout << "\n\n" << n* (std::sqrt(n)) << "\n";
 
     return 0;
 }

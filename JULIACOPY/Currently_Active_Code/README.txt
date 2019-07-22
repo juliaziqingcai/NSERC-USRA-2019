@@ -2,7 +2,7 @@ README:		For all currently active Summer 2019 NSERC-USRA Folder Program files
 
 AUTHORS:	Julia Cai, Alexa de Grandmont
 
-LAST UPDATE:	July 18th, 2019
+LAST UPDATE:	July 22nd, 2019
 
 LANGUAGE:	PYTHON
 VERSION:	3 and above
@@ -24,6 +24,14 @@ Current_Active_Code directory:
 		
 		All files related to the Nearest Neighbor Problem and the
 		Simple Randomized Algorithm from the related CCCG 2019 Paper.
+
+	NN2 Directory:
+		Contains:
+
+		All files related to the Modified Box Version (NN2) of the implementation
+		of the Simple Randomized Algorithm from the related CCCG 2019
+		Paper. Based on a Constrained Box Version of the orignal program (NN),
+		contained in the NN directory.
 
 
 	-README.txt:
