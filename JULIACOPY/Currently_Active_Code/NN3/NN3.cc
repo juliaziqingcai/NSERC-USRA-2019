@@ -11,19 +11,35 @@
 #include <ctime>
 #include <set>
 #include <utility>
+#include <tuple>
 using std::cin;
 using std::cout;
 using std::endl;
 using std::mt19937_64;
+using std::cos;
+using std::sin;
 
 
 /*
+    (MODIFIED 3D VERSION)
     Nearest-Neighbor Program based on a CCCG-2019 Paper:
     A Simple Randomized Algorithm for ALl Nearest Neighbors
     by Soroush Ebadian, Hamid Zarrabi-Zadeh
 
     Given a set P of n points in the plane, the all nearest neighbors
     problem asks for finding the closest poist in P for each point in the set.
+
+
+    MODIFICATION TO ORIGINAL:   
+
+        Instead of operating on a 2D Cartesian plane, in this version,
+        we extend the entire operation to be in 3D. The aim is to implement
+        a slight extension and explore the conjecture presented at the
+        end of the paper concerning higher d-dimensional spaces that
+        says the expected running time of the algorithm is:
+
+            O(n^(2-(1/d))) poly (log delta)) <= Here, delta represents max/min
+
 
     The algorithm presented works as follows:
 
@@ -42,9 +58,20 @@ using std::mt19937_64;
 
 
     New tools learned in the writing of this code:
-        std::set, std::pair, std::sort customization, when to use auto vs. auto&, 
-        difficulty of implementing qsort,
 
+        reviewed point rotation through transformation of matrices
+        see the rotate function for further details
+
+
+    THINGS LEARNED AFTER TESTING:
+
+        It is unknown what constant values for a, b, (the 2 exponents) 
+        and c (overall constant) will make the conjecture accurate, if it
+        is at all. Also learned that despite the delta value (ratio of
+        smallest NN distance to largest NN distance) not playing a role in
+        2D, it has a large effect in 3D. Unknown what this means for
+        further dimensions. Cannot seem to locate values that give
+        a roughly constant ratio of E[x] to Actual.
 
 */
 
@@ -66,16 +93,18 @@ static double get_value(char const *prompt)
 
 struct point
 /*
-    Represents a point on a plane. Contains the (x, y) coordinates of the
-    original point, as well as the (x', y') coordinates for the projected
-    point onto a random unit vector/line, and a pointer to the nearest
+    Represents a point in 3D. Contains the (x, y, z) coordinates of the
+    original point, as well as the (x', y', z') coordinates for the projected
+    point onto a random unit vector/plane, and a pointer to the nearest
     point/neighbour (NN).
 */
 {
     double x;
     double y;
+    double z;
     double x_prime;
     double y_prime;
+    double z_prime;
     struct point *NN; //pointer only after sorting
     //NOTE: in C++, it's type *ptr, whereas in C, it's type* ptr
     bool operator() (point p1, point p2) {return (p1.x_prime < p2.x_prime); }
@@ -83,7 +112,7 @@ struct point
 
 
 template<typename RNG>
-static void get_angles(int64_t num_angles, std::set<double>& angles, RNG& rng)
+static void get_angles(int64_t num_angles, std::set<std::tuple<double, double, double>>& angles, RNG& rng)
 /*
     Generates a given number of unique angles.
 */
@@ -93,11 +122,52 @@ static void get_angles(int64_t num_angles, std::set<double>& angles, RNG& rng)
     std::uniform_real_distribution<double> dist(-pi/2, pi/2); //get random angle
 
     while(angles.size() < num_angles){
-        double angle = dist(rng);
-        while(angle == (-pi/2))
-            angle = dist(rng); //error-check against inclusive lower bound
+
+        std::tuple<double, double, double> angle = std::make_tuple(dist(rng), dist(rng), dist(rng));
+
+        while(std::get<0>(angle) == (-pi/2))
+            std::get<0>(angle) = dist(rng);//error-check against inclusive lower bound
+        while(std::get<1>(angle) == (-pi/2))
+            std::get<1>(angle) = dist(rng);
+        while(std::get<2>(angle) == (-pi/2))
+            std::get<2>(angle) = dist(rng);
+
         angles.insert(angle);
     }
+}
+
+
+static void rotate(std::tuple<double, double, double> angle, std::vector<point>& points)
+/*
+    Rotates all points based on 3 arbitrary angles
+*/
+{
+    double a = std::get<0>(angle);
+    double b = std::get<1>(angle);
+    double c = std::get<2>(angle);
+
+    for (auto& p: points){
+        double x = p.x;
+        double y = p.y;
+        double z = p.z;
+
+        double xx = cos(b) * cos(c);
+        double xy = (-cos(b)) * sin(c);
+        double xz = sin(b);
+
+        double yx = (sin(a) * sin(b) * cos(c)) + (cos(a) * sin(c));
+        double yy = ((-sin(a)) * sin(b) * sin(c)) + (cos(a) * cos(c));
+        double yz = (-sin(a)) * cos(b);
+
+        double zx = ((-cos(a)) * sin(b) * cos(c)) + (sin(a) * sin(c));
+        double zy = (cos(a) * sin(b) * sin(c)) + (sin(a) * cos(c));
+        double zz = cos(a) * cos(b);
+
+        p.x = xx * x + xy * y + xz * z;
+        p.y = yx * x + yy * y + yz * z;
+        p.z = zx * x + zy * y + zz * z;
+    }
+
 }
 
 
@@ -120,8 +190,9 @@ static double euclidean_distance(point p1, point p2)
 {
     double diff_x = p1.x - p2.x;
     double diff_y = p1.y - p2.y;
+    double diff_z = p1.z - p2.z;
 
-    return (diff_x * diff_x) + (diff_y * diff_y);
+    return (diff_x * diff_x) + (diff_y * diff_y) + (diff_z * diff_z);
 }
 
 
@@ -130,8 +201,9 @@ static double projected_distance(point p1, point p2)
 {
     double diff_x_prime = p1.x_prime - p2.x_prime;
     double diff_y_prime = p1.y_prime - p2.y_prime;
+    double diff_z_prime = p1.z_prime - p2.z_prime;
 
-    return (diff_x_prime * diff_x_prime) + (diff_y_prime * diff_y_prime);
+    return (diff_x_prime * diff_x_prime) + (diff_y_prime * diff_y_prime) + (diff_z_prime * diff_z_prime);
 }
 
 
@@ -236,8 +308,8 @@ int main(){
     int64_t num_angles = (int64_t) std::round(get_value("Number of angles to generate(int); "));
 
     cout << "\n\n ----RUN REPORT----\n";
-    cout << "Coordinate Upper Bound: " << upper_bound << "\n";
-    cout << "Coordinate Lower Bound: " << lower_bound << "\n";
+    //cout << "Coordinate Upper Bound: " << upper_bound << "\n";
+    //cout << "Coordinate Lower Bound: " << lower_bound << "\n";
     cout << "N                     : " << n << "\n";
 
     //set up RNG
@@ -247,85 +319,109 @@ int main(){
     std::vector<point> points; //vector of point structs (less error-prone than pointers)
 
     //POINT GENERATION STARTS
-    std::set<std::pair<double, double>> coordinates; //set made to check for duplicates
+    std::set<std::tuple<double, double, double>> coordinates; //set made to check for duplicates
 
     /*
     // TEST COORDINATES N=8 (MAKE SURE TO ENTER 8 FOR N IN TERMINAL)
-    std::pair<double, double> p1 = std::make_pair(4, 3);
+    std::tuple<double, double, double> p1 = std::make_tuple(4, 3, 0);
     coordinates.insert(p1);
 
-    std::pair<double, double> p2 = std::make_pair(8,0);
+    std::tuple<double, double, double> p2 = std::make_tuple(8,0,0);
     coordinates.insert(p2);
     
-    std::pair<double, double> p3 = std::make_pair(1,1);
+    std::tuple<double, double, double> p3 = std::make_tuple(1,1,0);
     coordinates.insert(p3);
 
-    std::pair<double, double> p4 = std::make_pair(3, 2);
+    std::tuple<double, double, double> p4 = std::make_tuple(3, 2, 0);
     coordinates.insert(p4);
 
-    std::pair<double, double> p5 = std::make_pair(0, 0);
+    std::tuple<double, double, double> p5 = std::make_tuple(0, 0, 0);
     coordinates.insert(p5);
 
-    std::pair<double, double> p6 = std::make_pair(9, 1);
+    std::tuple<double, double, double> p6 = std::make_tuple(9, 1, 0);
     coordinates.insert(p6);
 
-    std::pair<double, double> p7 = std::make_pair(1.5, 9);
+    std::tuple<double, double, double> p7 = std::make_tuple(1.5, 9, 0);
     coordinates.insert(p7);
 
-    std::pair<double, double> p8 = std::make_pair(0.5, 8);
+    std::tuple<double, double, double> p8 = std::make_tuple(0.5, 8, 0);
     coordinates.insert(p8);*/
 
     
     
     std::uniform_real_distribution<double> dist(lower_bound, upper_bound);
     while(coordinates.size() < n)//fill the set
-        coordinates.insert(std::make_pair (dist(rng), dist(rng)));
-    
+        coordinates.insert(std::make_tuple(dist(rng), dist(rng), dist(rng)));
+        
 
     for(auto coor: coordinates){//put coordinates into points
         point p;
-        p.x = coor.first;
-        p.y = coor.second;
+        p.x = std::get<0>(coor);
+        p.y = std::get<1>(coor);
+        p.z = std::get<2>(coor);
         points.push_back(p);
     }
-
-    std::set<double> angles;//picked a set due to only needing the values
+    
+    std::set<std::tuple<double, double, double>> angles;//picked a set due to only needing the values
     get_angles(num_angles, angles, rng);
 
-    for(auto angle: angles){
-        
-        double a = tan(angle); //random angle is y = tan(a)
+    int64_t sum = 0;
 
-        for(auto& p : points){
+    for(auto angle: angles){
+
+        rotate(angle, points);
+        
+
+        for(auto& p : points){ //projecting onto the x-axis after some arbitrary rotations
             //way to calculate prime coordinates based on equation of the line by simple algebra proof
-            p.x_prime = (p.x + (p.y * a)) / ((a * a) + 1);
-            p.y_prime = p.x_prime * a;
+            p.x_prime = p.x;
+            p.y_prime = 0;
+            p.z_prime = 0;
         }
 
         std::sort(points.begin(), points.end(), compare);//sort the points by x_prime values
 
         int64_t counter = 0;//counter to compare # of while loop iterationx to E[X]
 
+
         for(int64_t i = 0; i<n; ++i) // THE GIANT FOR LOOP OF DOOM BEGINS
             get_NN(n, points, i, counter);
-
+        
+        
         //cout << "\n------------------------------------------------------\n";
 
         /*
         for(auto p: points){
-            cout << "\nCurrent Point is: (" << p.x << ", " << p.y << ") \n";
-            cout << "NN Point is     : (" << (*(p.NN)).x << ", " << (*(p.NN)).y << ") \n";
+            cout << "\nCurrent Point is: (" << p.x << ", " << p.y << ", " << p.z << ") \n";
+            cout << "NN Point is     : (" << (*(p.NN)).x << ", " << (*(p.NN)).y << ", " << (*(p.NN)).z <<") \n";
         }*/
 
         //cout << "\nAngle used                      : " << angle << "\n";
-        //cout << "Total # of While Loop Iterations: " << counter << "\n";
-        //cout << "E[# of While Loop Iteractions]  : " << n * (std::sqrt(n)) << "\n";
-        cout << "\n";
-        cout << counter;
+        //cout << "\nTotal # of While Loop Iterations: " << counter << "\n";
+        //cout << "E[# of While Loop Iteractions]  : " << std::cbrt(n * n * n * n * n) << "\n";
+        cout << "\nCounter : " << counter;
+        sum += counter;
+    }
+    /*
+    double min_nn_distance = std::numeric_limits<double>::max();  ; 
+    double max_nn_distance = 0;
 
+    for (int64_t i=0; i< points.size(); ++i ){
+        if(euclidean_distance (points[i], *((points[i]).NN)) < min_nn_distance)
+            min_nn_distance = euclidean_distance(points[i], *((points[i]).NN));
+        if(euclidean_distance (points[i], *((points[i]).NN)) > max_nn_distance)
+            max_nn_distance = euclidean_distance(points[i], *((points[i]).NN));
     }
 
-    cout << "\n\n" << n* (std::sqrt(n)) << "\n";
+    double delta = std::sqrt((max_nn_distance / min_nn_distance));
+
+    cout << "\n\nDelta = " << delta << "\n";*/
+
+    cout << "\n\nE[# of while loop iterations] = " << std::cbrt(n * n * n * n) << "\n" ;//* std::pow((std::log(delta)), 2 ) << "\n";
+    cout << "Actual Average Counter =        " << (sum/angles.size());
+    cout << "\nRatio of E[x] to Actual =       " << (std::cbrt(n * n * n * n)) / (sum/angles.size()) << "\n";//* std::pow((std::log(delta)), 2)) / (sum/angles.size());
+
+
 
     return 0;
 }

@@ -2,7 +2,7 @@ README:		For all currently active Summer 2019 NSERC-USRA Folder Program files
 
 AUTHORS:	Julia Cai, Alexa de Grandmont
 
-LAST UPDATE:	July 22nd, 2019
+LAST UPDATE:	July 29th, 2019
 
 LANGUAGE:	PYTHON
 VERSION:	3 and above
@@ -32,6 +32,14 @@ Current_Active_Code directory:
 		of the Simple Randomized Algorithm from the related CCCG 2019
 		Paper. Based on a Constrained Box Version of the orignal program (NN),
 		contained in the NN directory.
+
+	NN3 Directory:
+		Contains:
+		
+		All files related to the 3D Version (NN3) of the implementation of the
+		Simple Randomized Algorithm from the related CCCG 2019 Paper. Based on
+		a 3D extension version of the original program (NN) contained in the
+		NN directory.
 
 
 	-README.txt:

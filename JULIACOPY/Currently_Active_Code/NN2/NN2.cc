@@ -63,7 +63,9 @@ using std::mt19937_64;
 
     New tools learned in the writing of this code:
         std::set, std::pair, std::sort customization, when to use auto vs. auto&, 
-        difficulty of implementing qsort,
+        difficulty of implementing qsort, be careful of logic errors,
+        managed to cause a double-free seg fault core dump by corrupting
+        memory from overwriting and referencing non-existent data
 
     
     Things Learned from Box Experiment:

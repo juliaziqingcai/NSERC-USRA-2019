@@ -1,10 +1,10 @@
-README:		For all files related to the modified Box Version of the
+README:		For all files related to the modified 3D Version of the
 		Simple Randomized Algorithm approach to the Nearest 
 		Neighbor Problem as presented by the 2019 CCCG Paper.
 
 AUTHORS:	Julia Cai, Alexa de Grandmont
 
-LAST UPDATE:	July 22nd, 2019
+LAST UPDATE:	July 30th, 2019
 
 LANGUAGE:	PYTHON
 VERSION:	3 and above
@@ -18,25 +18,28 @@ ISSUES:		1) Python2 causes float division to become integer division
 
 ----------------------------------------FILES--------------------------------------------------	
 
-NN2 directory:
+NN3 directory:
 	Contains:
 
 	-in.txt:
 		Intake file for the NN2 program in terminal. Used for testing using
 		the following terminal command:
 			
-			time /tmp/NN2 < in.txt >> results.ods
+			time /tmp/NN3 < in.txt >> results.ods
 	
 	-Makefile:
-		The Makefile for the NN2.cc file. Options for maximum perfomance
+		The Makefile for the NN3.cc file. Options for maximum perfomance
 		optimization chosen.
 
-	-NN2.cc:
+	-NN3.cc:
 		Program file based off a modified version of the CCCG-2019 paper 
 		(also found in the PDFs folder) for a randomized algorithm to address
-		the all nearest neighbors problem. Added boxes in which to generate closely 
-		grouped points to test if this takes longer than n(sqrt(n)).
+		the all nearest neighbors problem. Modified it to work for 3D as an
+		extension of the original 2D algorithm.
 
 	-README.txt:
 		Files gives a quick overview of directory contents.
+
+	-results_compilation.ods:
+		All test results compiled together along with their analyses.
 

@@ -28,6 +28,10 @@ so this file is NOT meant to be run.
 Ported to C++ for speed gains (faster by X100)
 Credits of actual code go to Luis Fernando Schultz Xavier da Silveira (PhD)
 
+The algorithm works as follows:
+
+    1. 
+
 */
 
 template<typename RNG>
@@ -136,11 +140,11 @@ int main()
 }
 
 //*************************MAKEFILE PORITION***********************************
-
+/*
 N1:	N1.cc
 	c++ -std=c++14 -o /tmp/N1 N1.cc -march=native -O2 -pipe -fomit-frame-pointer -fwhole-program
 
-/*
+
 
 c++:
     The compiler chosen is c++ here because the lab machines and Julia's VMs are ALL run with Ubuntu.
@@ -186,8 +190,10 @@ c++:
 -fwhole-program:
     Forces the compiler to acknowledge this one file as the whole program, and therefore forces more
     aggressive optimization since there is nothing else to juggle/consider
-*/
+
 
 
 clean:
 	rm -f main
+
+*/
