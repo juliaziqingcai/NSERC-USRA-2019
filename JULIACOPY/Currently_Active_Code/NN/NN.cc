@@ -292,6 +292,8 @@ int main(){
     std::set<double> angles;//picked a set due to only needing the values
     get_angles(num_angles, angles, rng);
 
+    int64_t sum = 0;
+
     for(auto angle: angles){
         
         double a = tan(angle); //random angle is y = tan(a)
@@ -320,12 +322,32 @@ int main(){
         //cout << "\nAngle used                      : " << angle << "\n";
         //cout << "Total # of While Loop Iterations: " << counter << "\n";
         //cout << "E[# of While Loop Iteractions]  : " << n * (std::sqrt(n)) << "\n";
-        cout << "\n";
-        cout << counter;
+        //cout << "\n";
+        //cout << counter;
+
+        sum += counter;
 
     }
 
-    cout << "\n\n" << n* (std::sqrt(n)) << "\n";
+    double min_nn_distance = std::numeric_limits<double>::max();  ; 
+    double max_nn_distance = 0;
+
+    for (int64_t i=0; i< points.size(); ++i ){
+        if(euclidean_distance (points[i], *((points[i]).NN)) < min_nn_distance)
+            min_nn_distance = euclidean_distance(points[i], *((points[i]).NN));
+        if(euclidean_distance (points[i], *((points[i]).NN)) > max_nn_distance)
+            max_nn_distance = euclidean_distance(points[i], *((points[i]).NN));
+    }
+
+    double delta = std::sqrt((max_nn_distance / min_nn_distance));
+
+    cout << "\n\nDelta = " << delta << "\n";
+
+    cout << "\n\nE[# of while loop iterations] = " << n* (std::sqrt(n)) << "\n" ;
+    cout << "Actual Average Counter =        " << (sum/angles.size());
+    cout << "\nRatio of E[x] to Actual =       " << (n * (std::sqrt(n))) / (sum/angles.size()) << "\n";
+
+    //cout << "\n\n" << n* (std::sqrt(n)) << "\n";
 
     return 0;
 }

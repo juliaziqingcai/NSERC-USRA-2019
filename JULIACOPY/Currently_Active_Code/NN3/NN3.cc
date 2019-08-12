@@ -302,10 +302,14 @@ int main(){
 
     //ask user for range values 
 
-    double upper_bound = get_value("Coordinate upper bound(real): ");
-    double lower_bound = get_value("Coordinate lower bound(real): "); //upper/lower coordinate bounds
-    int64_t n = (int64_t) std::round(get_value("Number of points to generate(int): ")); // n = #points
-    int64_t num_angles = (int64_t) std::round(get_value("Number of angles to generate(int); "));
+    double upper_bound = 1;
+    double lower_bound = 0; //upper/lower coordinate bounds
+    int64_t n;
+    cout << "\nNumber of points to generate(int): "; // n = #points
+    cin >> n;
+    int64_t num_angles;
+    cout << "\nNumber of angles to generate(int): ";
+    cin >> num_angles;
 
     cout << "\n\n ----RUN REPORT----\n";
     //cout << "Coordinate Upper Bound: " << upper_bound << "\n";
@@ -399,7 +403,7 @@ int main(){
         //cout << "\nAngle used                      : " << angle << "\n";
         //cout << "\nTotal # of While Loop Iterations: " << counter << "\n";
         //cout << "E[# of While Loop Iteractions]  : " << std::cbrt(n * n * n * n * n) << "\n";
-        cout << "\nCounter : " << counter;
+        //cout << "\nCounter : " << counter;
         sum += counter;
     }
     /*
