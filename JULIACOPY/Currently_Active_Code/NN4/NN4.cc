@@ -64,29 +64,21 @@ using std::sin;
         After much testing, it seems that the average while loop counter
         DOES NOT depend on delta. The constant in front of the n^(5/3) seems to be
 
-            c = 1.0465
+            c = 1.0465 - 1.06
         
-        from ~2.8 days of testing results, which can be found in the file
-        results_compilation.ods. This test used 12 different N values, 
-        generated 25 point sets for each N, and generated 10 angles per
-        set.
+        The testing included values of N from 1k all the way up to 2M.
+
+        It also seems that as N gets larger, the ratio gets smaller, which makes
+        sense as the bounds for generating point values are confined and there are
+        more points in the sam space. The delta also increases, which makes
+        sense due to some points becoming arbitrarily close to one another while
+        the largest distance remains sort of constant.
+
+        In comparison to the 4D version (NN5), the ratios and delta are smaller in 
+        NN4 (3D) since there are only 3 axes along which to pick values, which
+        puts the points closer together.
 
 */
-
-
-static double get_value(char const *prompt)
-/*
-    Function for getting numerical input from user to modularize
-    and reduce repetition.
-
-*/
-{
-    double value;
-
-    cout << "\n" << prompt;
-    cin >> value;
-    return value;
-}
 
 
 struct point
@@ -421,16 +413,13 @@ int main(){
     double upper_bound = 1;
     double lower_bound = 0; //upper/lower coordinate bounds
 
-    //int64_t n;
+    int64_t n = 1000;
 
     //int64_t n_array[6] = {1000000,2000000, 3000000, 4000000, 5000000, 6000000};
-    int64_t n_array[12];
+    int64_t n_array[100];
 
-    for (int i=1; i<11; ++i)
-        n_array[i-1] = i * 100000;
-    
-    n_array[10] = 1500000;
-    n_array[11] = 2000000;
+    for (int i=1; i<101; ++i)
+        n_array[i-1] = i * 1000;//100000;
     //cout << "\nNumber of points to generate(int): "; // n = #points
     //cin >> n;
 

@@ -12,12 +12,17 @@
 #include <set>
 #include <utility>
 #include <tuple>
+#include <eigen3/Eigen/Core> // Eigen library version 3, light core version
 using std::cin;
 using std::cout;
 using std::endl;
 using std::mt19937_64;
 using std::cos;
 using std::sin;
+
+//partial fixes for up to n=100
+#define EIGEN_DONT_VECTORIZE 
+#define EIGEN_DISABLE_UNALIGHNED_ARRAY_ASSERT
 
 
 /*
@@ -28,6 +33,8 @@ using std::sin;
 
     Given a set P of n points in the plane, the all nearest neighbors
     problem asks for finding the closest poist in P for each point in the set.
+
+    Credits of the Eigen C++ Library application go to Luis Fernando Schultz Xavier da Silveira (PhD)
 
 
     MODIFICATION TO ORIGINAL:   
@@ -61,28 +68,77 @@ using std::sin;
 
     New tools learned in the writing of this code:
 
-        How to implement a matrix multiplcation function
+        -By default libraries are installed in /usr/lib and
+        header files will be in /usr/include
+
+        -How to implement a matrix multiplcation function
+
+        -Introduction to the Eigen library for C++, very powerful for
+        matrix manipulation. It is overloaded for linear-algebraic operations,
+        with regular arithmetic operators and special ones (such as dot(), cros(), << , etc.)
+        View the Eigen Tutorial PDF in the PDFs directory
+
+        -Must install eigen library to use on Ubuntu (do this in the
+        /usr/include directory):
+
+            sud apt install libeigen3-dev
+        
+        -How to check for location of installed library:
+
+            dpkg -L packagename (WARNING: Only works for packed installed by dpkg)
+        
+        -How to check for all packages available by dpkg:
+
+            dpkg --get-selections | grep <packagename>
+        
+        -How to check for available libraries by apt:
+
+            apt-cache search . 
+            apt-cache search keyword
+
+
+    Debugging:
+
+        -In Ubuntu 16.04, the Eigen library can be fragile with memory
+        and matrix alignment issues. The 2 fixes to this are as follows:
+
+        1) Use the macros #define EIGEN_DONT_VECTORIZE and
+        #define EIGEN_DISABLE_UNALIGHNED_ARRAY_ASSERT in the program to
+        correctly align all matrices and vectors. Even if your issue is not
+        directly related to this, it is a good precaution to take. The only 
+        issue is you want the absolute maximum performance out of the program.
+        This solution will slightly decrease the speed of the program for
+        highly complex computations, but for the purposes of NN4, the effect
+        is completely negligible and unnoticeable.
+
+        2) Where an STL container type (std::vector, std::map, etc.) 
+        is used in the code, include an Eigen::aligned_allocator as a
+        parameter. 
+
+        ex. std::vector<T> name; => std::vector<T, Eigen::aligned_allocator<T>> name;
 
 
     THINGS LEARNED AFTER TESTING:
 
+        After much testing, it seems that the average while loop counter
+        DOES NOT depend on delta. The constant in front of the n^(7/3) seems to be
+
+            c = 1.158 - 1.167
+        
+        The testing included values of N from 1k all the way up to 500k.
+
+        It also seems that as N gets larger, the ratio gets smaller, which makes
+        sense as the bounds for generating point values are confined and there are
+        more points in the sam space. The delta also increases, which makes
+        sense due to some points becoming arbitrarily close to one another while
+        the largest distance remains sort of constant.
+
+        In comparison to the 3D version (NN4), the ratios and delta are larger in 
+        NN5 (4D) since there is an extra dimension along which to generate
+        unique point values.
+
 
 */
-
-
-static double get_value(char const *prompt)
-/*
-    Function for getting numerical input from user to modularize
-    and reduce repetition.
-
-*/
-{
-    double value;
-
-    cout << "\n" << prompt;
-    cin >> value;
-    return value;
-}
 
 
 struct point
@@ -93,22 +149,20 @@ struct point
     point/neighbour (NN).
 */
 {
-    double x;
-    double y;
-    double z;
-    double u;
-    double x_prime;
-    double y_prime;
-    double z_prime;
-    double u_prime;
+    Eigen::Matrix<double, 4, 1> coords; // Make a matrix of doubles, 4 by 1
+    Eigen::Matrix<double, 4, 1> coords_prime;
     struct point *NN; //pointer only after sorting
     //NOTE: in C++, it's type *ptr, whereas in C, it's type* ptr
-    bool operator() (point p1, point p2) {return (p1.x_prime < p2.x_prime); }
+    bool operator() (point const& p1, point const& p2) {return (p1.coords_prime(0, 0) < p2.coords_prime(0, 0)); }
 };
 
 
+typedef std::tuple<double, double, double, double, double, double> Angles; 
+//Struct to represent collection of 6 random angles around which to rotate
+
+
 template<typename RNG>
-static void get_angles(int64_t num_angles, std::set<std::tuple<double, double, double, double, double, double>>& angles, RNG& rng)
+static void get_angles(int64_t num_angles, std::set<Angles>& angles, RNG& rng)
 /*
     Generates a given number of unique angles.
 */
@@ -119,8 +173,7 @@ static void get_angles(int64_t num_angles, std::set<std::tuple<double, double, d
 
     while(angles.size() < num_angles){
 
-        std::tuple<double, double, double, double, double, double> angle = 
-            std::make_tuple(dist(rng), dist(rng), dist(rng),dist(rng), dist(rng), dist(rng));
+        auto angle = std::make_tuple(dist(rng), dist(rng), dist(rng),dist(rng), dist(rng), dist(rng));
 
         while(std::get<0>(angle) == (-pi/2))
             std::get<0>(angle) = dist(rng);//error-check against inclusive lower bound
@@ -140,29 +193,11 @@ static void get_angles(int64_t num_angles, std::set<std::tuple<double, double, d
 }
 
 
-static void matrix_multiply(double A[4][4], double B[4][4], double C[4][4])
-/*
-    Multiplies two given matrices A and B together. Puts the result into
-    the resulting matrix, C.
-*/
-{//TODO: Fix this
-    for(int i=0; i<4; ++i){
-        for(int j=0; j<4; ++i){
-            C[i][j] = 0.0;
-            for(int k=0; k<4; ++i){
-                C[i][j] += A[i][k] * B[k][j];
-            }
-        }
-    }
-
-}
-
-
-static void rotate(std::tuple<double, double, double, double, double, double> angle, std::vector<point>& points, double (&result_matrix)[4][4])
+static void rotate(Angles const& angle, std::vector<point, Eigen::aligned_allocator<point>>& points)
 /*
     Rotates all points based in 4D
 */
-{//TODO: Fix this
+{
     double a = std::get<0>(angle);
     double b = std::get<1>(angle);
     double c = std::get<2>(angle);
@@ -170,78 +205,53 @@ static void rotate(std::tuple<double, double, double, double, double, double> an
     double e = std::get<4>(angle);
     double f = std::get<5>(angle);
 
-    double A[4][4] =
-    {
-        {cos(a), sin(a), 0, 0},
-        {-sin(a), cos(a), 0, 0},
-        {0, 0, 1, 0}, 
-        {0, 0, 0, 1}
-    };
+    Eigen::Matrix<double, 4, 4> A, B, C, D, E, F;
 
-    double B[4][4] =
-    {
-        {1, 0, 0, 0},
-        {0, cos(b), sin(b), 0},
-        {0, -sin(b), cos(b), 0},
-        {0, 0, 0, 1}
-    };
+    A << //Comma initializer syntax for matrices, can directly output matrix A with std::cout
+    //Can also use << operator to fill block expressions
+        cos(a), sin(a), 0, 0,
+        -sin(a), cos(a), 0, 0,
+        0, 0, 1, 0, 
+        0, 0, 0, 1;
 
-    double C[4][4]=
-    {
-        {cos(c), 0, -sin(c), 0},
-        {0, 1, 0, 0},
-        {sin(c), 0, cos(c), 0},
-        {0, 0, 0, 1}
-    };
+    B <<
+        1, 0, 0, 0,
+        0, cos(b), sin(b), 0,
+        0, -sin(b), cos(b), 0,
+        0, 0, 0, 1;
 
-    double D[4][4] =
-    {
-        {cos(d), 0, 0, sin(d)},
-        {0, 1, 0, 0},
-        {0, 0, 1, 0},
-        {-sin(d), 0, 0, cos(d)}
-    };
+    C <<
+        cos(c), 0, -sin(c), 0,
+        0, 1, 0, 0,
+        sin(c), 0, cos(c), 0,
+        0, 0, 0, 1;
 
-    double E[4][4] =
-    {
-        {1, 0, 0, 0},
-        {0, cos(e), 0, -sin(e)},
-        {0, 0, 1, 0},
-        {0, sin(e), 0, cos(e)}
-    };
+    D <<
+        cos(d), 0, 0, sin(d),
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        -sin(d), 0, 0, cos(d);
 
-    double F[4][4] =
-    {
-        {1, 0, 0, 0},
-        {0, 1, 0, 0},
-        {0, 0, cos(f), -sin(f)},
-        {0, 0, sin(f), cos(f)}
-    };
+    E <<
+        1, 0, 0, 0,
+        0, cos(e), 0, -sin(e),
+        0, 0, 1, 0,
+        0, sin(e), 0, cos(e);
 
-    //double result_matrix[4][4];
+    F <<
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, cos(f), -sin(f),
+        0, 0, sin(f), cos(f);
+    
+    auto M = A * B * C * D * E * F; //Look at this elegance
 
-    matrix_multiply(A, B, result_matrix);
-    matrix_multiply(result_matrix, C, result_matrix);
-    matrix_multiply(result_matrix, D, result_matrix);
-    matrix_multiply(result_matrix, E, result_matrix);
-    matrix_multiply(result_matrix, F, result_matrix);
-
-    for (auto& p: points){
-        double x = p.x;
-        double y = p.y;
-        double z = p.z;
-        double u = p.u;
-
-        p.x = result_matrix[0][0] * x + result_matrix[0][1] * y + result_matrix[0][2] * z + result_matrix[0][3] * u;
-        p.y = result_matrix[1][0] * x + result_matrix[1][1] * y + result_matrix[1][2] * z + result_matrix[1][3] * u;
-        p.z = result_matrix[2][0] * x + result_matrix[2][1] * y + result_matrix[2][2] * z + result_matrix[2][3] * u;
-        p.u = result_matrix[3][0] * x + result_matrix[3][1] * y + result_matrix[3][2] * z + result_matrix[3][3] * u;
-    }
-
+    for (auto& p: points)
+        p.coords = M * p.coords; //matrix multiplication through overloaded Eigen library operator
 }
 
 
-static bool compare (point p1, point p2)
+static bool compare (point const& p1, point const& p2)
 /*
     Comparison function for std::sort() to rank points by their
     x_prime values. Returns a boolean indicating if p1 should go
@@ -251,35 +261,29 @@ static bool compare (point p1, point p2)
     false(0) = p2 goes first
 */
 {
-    return (p1.x_prime < p2.x_prime);
+    return (p1.coords_prime[0] < p2.coords_prime[0]); 
+    //access elements through subscript operator, ONLY works because 
+    //it is effectively a vector, use (row, col) syntax for regular matrices
 }
 
 
-static double euclidean_distance(point p1, point p2)
+static double euclidean_distance_squared(point const& p1, point const& p2)
 //Calculates and returns the square of the euclidean distance between two points
 {
-    double diff_x = p1.x - p2.x;
-    double diff_y = p1.y - p2.y;
-    double diff_z = p1.z - p2.z;
-    double diff_u = p1.u - p2.u;
-
-    return (diff_x * diff_x) + (diff_y * diff_y) + (diff_z * diff_z) + (diff_u * diff_u);
+    auto d = p2.coords - p1.coords;
+    return d.transpose()*d; //special transpose() function for a matrix
 }
 
 
-static double projected_distance(point p1, point p2)
+static double projected_distance_squared(point const& p1, point const& p2)
 //Calculates and returns the square of the projected distance between two points
 {
-    double diff_x_prime = p1.x_prime - p2.x_prime;
-    double diff_y_prime = p1.y_prime - p2.y_prime;
-    double diff_z_prime = p1.z_prime - p2.z_prime;
-    double diff_u_prime = p1.u_prime - p2.u_prime;
-
-    return (diff_x_prime * diff_x_prime) + (diff_y_prime * diff_y_prime) + (diff_z_prime * diff_z_prime) + (diff_u_prime * diff_u_prime);
+    auto d = p2.coords_prime - p1.coords_prime;
+    return d.transpose()*d;
 }
 
 
-static void get_NN(int64_t n, std::vector<point>& points, int64_t i, int64_t& counter)
+static void get_NN(int64_t n, std::vector<point, Eigen::aligned_allocator<point>>& points, int64_t i, int64_t& counter)
 /*
     Walks through the sorted vector of points to find the Nearest Neighbour (NN)
     of the point at index i. Checks through all edge cases for travelling
@@ -302,7 +306,7 @@ static void get_NN(int64_t n, std::vector<point>& points, int64_t i, int64_t& co
         if (right == n)
             current = left;
         else{ // case where (left >= 0) AND (right <= n-1)
-            if(projected_distance(points[i], points[left]) <= projected_distance(points[i], points[right]))
+            if(projected_distance_squared(points[i], points[left]) <= projected_distance_squared(points[i], points[right]))
                 current = left;
             else
                 current = right;
@@ -314,15 +318,15 @@ static void get_NN(int64_t n, std::vector<point>& points, int64_t i, int64_t& co
 
     // STEP 2: GIANT SYMMETRIC WHILE LOOP TO HANDLE EDGE CASES
 
-    while( ( (left >= 0) || (right <= (n-1)) ) && (projected_distance(points[i], points[current]) <= min_euclidean_distance) ){
+    while( ( (left >= 0) || (right <= (n-1)) ) && (projected_distance_squared(points[i], points[current]) <= min_euclidean_distance) ){
 
         ++counter;
 
         // CHECK & UPDATE NN
 
-        if (euclidean_distance(points[i], points[current]) < min_euclidean_distance){
+        if (euclidean_distance_squared(points[i], points[current]) < min_euclidean_distance){
             points[i].NN = &(points[current]); 
-            min_euclidean_distance = euclidean_distance(points[i], points[current]);
+            min_euclidean_distance = euclidean_distance_squared(points[i], points[current]);
         }
 
         //SYMMETRIC CHECKS TO UPDATE LEFT/RIGHT
@@ -335,7 +339,7 @@ static void get_NN(int64_t n, std::vector<point>& points, int64_t i, int64_t& co
                 if ( right == n)
                     current = left;
                 else{ // case where (left >= 0) AND (right <= n-1)
-                    if (projected_distance(points[i], points[left]) <= projected_distance(points[i], points[right]))
+                    if (projected_distance_squared(points[i], points[left]) <= projected_distance_squared(points[i], points[right]))
                         current = left;
                     else
                         current = right;
@@ -351,7 +355,7 @@ static void get_NN(int64_t n, std::vector<point>& points, int64_t i, int64_t& co
                 if (left == -1)
                     current = right;
                 else{// case where (left >= 0) AND (right <= n-1)
-                    if (projected_distance(points[i], points[left]) <= projected_distance(points[i], points[right]))
+                    if (projected_distance_squared(points[i], points[left]) <= projected_distance_squared(points[i], points[right]))
                         current = left;
                     else
                         current = right;
@@ -373,12 +377,12 @@ static double algorithm(double upper_bound, double lower_bound, int64_t n, int64
     mt19937_64 rng;
     rng.seed(std::random_device()()); 
     // 1st pair of parentheses to activate random_device, 2nd pair to all random_device
-    std::vector<point> points; //vector of point structs (less error-prone than pointers)
+    std::vector<point, Eigen::aligned_allocator<point>> points; //,Eigen::aligned_allocator<point>> points; //vector of point structs (less error-prone than pointers)
 
     //POINT GENERATION STARTS
     std::set<std::tuple<double, double, double, double>> coordinates; //set made to check for duplicates
 
-    
+    /*
     // TEST COORDINATES N=8 (MAKE SURE TO ENTER 8 FOR N IN TERMINAL)
     std::tuple<double, double, double, double> p1 = std::make_tuple(4, 3, 0,0);
     coordinates.insert(p1);
@@ -402,20 +406,17 @@ static double algorithm(double upper_bound, double lower_bound, int64_t n, int64
     coordinates.insert(p7);
 
     std::tuple<double, double, double, double> p8 = std::make_tuple(0.5, 8, 0,0);
-    coordinates.insert(p8);
+    coordinates.insert(p8);*/
     
     
-    /*std::uniform_real_distribution<double> dist(lower_bound, upper_bound);
+    std::uniform_real_distribution<double> dist(lower_bound, upper_bound);
     while(coordinates.size() < n)//fill the set
-        coordinates.insert(std::make_tuple(dist(rng), dist(rng), dist(rng), dist(rng)));*/
+        coordinates.insert(std::make_tuple(dist(rng), dist(rng), dist(rng), dist(rng)));
         
-
+    //cout << "Flag 01" << endl;
     for(auto coor: coordinates){//put coordinates into points
         point p;
-        p.x = std::get<0>(coor);
-        p.y = std::get<1>(coor);
-        p.z = std::get<2>(coor);
-        p.u = std::get<3>(coor);
+        p.coords << std::get<0>(coor), std::get<1>(coor), std::get<2>(coor), std::get<3>(coor);
         points.push_back(p);
     }
     
@@ -426,39 +427,31 @@ static double algorithm(double upper_bound, double lower_bound, int64_t n, int64
 
     for(auto angle: angles){
 
-        std::vector<double [4][4]> matrices(1);
-
-        for(auto& result_matrix: matrices)
-            rotate(angle, points, result_matrix);
+        rotate(angle, points);
         
-
         for(auto& p : points){ //projecting onto the x-axis after some arbitrary rotations
             //way to calculate prime coordinates based on equation of the line by simple algebra proof
-            p.x_prime = p.x;
-            p.y_prime = 0;
-            p.z_prime = 0;
-            p.u_prime = 0;
+            p.coords_prime << p.coords(0, 0), 0, 0, 0;
         }
 
         std::sort(points.begin(), points.end(), compare);//sort the points by x_prime values
 
         int64_t counter = 0;//counter to compare # of while loop iterationx to E[X]
 
-
         for(int64_t i = 0; i<n; ++i) // THE GIANT FOR LOOP OF DOOM BEGINS
             get_NN(n, points, i, counter);
         
-        
-        cout << "\n------------------------------------------------------\n";
-
+        /*
+        cout << "\n======================================================\n";
         
         for(auto p: points){
-            cout << "\nCurrent Point is: (" << p.x << ", " << p.y << ", " << p.z << ", " << p.u << ") \n";
-            cout << "NN Point is     : (" << (*(p.NN)).x << ", " << (*(p.NN)).y << ", " << (*(p.NN)).z << ", " << (*(p.NN)).u << ") \n";
+            cout << "Current Point is: \n" << p.coords << "\n" << endl;
+            cout << "NN is: \n" << p.NN->coords;
+            cout << "\n------------------------------------------------------\n";
         }
 
         cout << "\nAngle used : " << "(" << std::get<0>(angle) << ", " << std::get<1>(angle) << ", " << std::get<2>(angle) << ", "
-            << std::get<3>(angle) << ", " << std::get<4>(angle) << ", " << std::get<5>(angle) << ")\n";
+            << std::get<3>(angle) << ", " << std::get<4>(angle) << ", " << std::get<5>(angle) << ")\n";*/
         //cout << "\nTotal # of While Loop Iterations: " << counter << "\n";
         //cout << "E[# of While Loop Iteractions]  : " << std::cbrt(n * n * n * n * n) << "\n";
         //cout << "\nCounter : " << counter;
@@ -469,10 +462,10 @@ static double algorithm(double upper_bound, double lower_bound, int64_t n, int64
     double max_nn_distance = 0;
 
     for (int64_t i=0; i< points.size(); ++i ){
-        if(euclidean_distance (points[i], *((points[i]).NN)) < min_nn_distance)
-            min_nn_distance = euclidean_distance(points[i], *((points[i]).NN));
-        if(euclidean_distance (points[i], *((points[i]).NN)) > max_nn_distance)
-            max_nn_distance = euclidean_distance(points[i], *((points[i]).NN));
+        if(euclidean_distance_squared (points[i], *((points[i]).NN)) < min_nn_distance)
+            min_nn_distance = euclidean_distance_squared(points[i], *((points[i]).NN));
+        if(euclidean_distance_squared (points[i], *((points[i]).NN)) > max_nn_distance)
+            max_nn_distance = euclidean_distance_squared(points[i], *((points[i]).NN));
     }
 
     double delta = std::sqrt((max_nn_distance / min_nn_distance));
@@ -500,25 +493,33 @@ int main(){
     double upper_bound = 1;
     double lower_bound = 0; //upper/lower coordinate bounds
 
-    int64_t n_array[1] = {8};
+    //int64_t n_array[1] = {740};
+    //int64_t n_array[1] = {40};
+    //int64_t n_array[6] = {1000, 2000, 3000, 4000, 5000, 6000};
+    //int64_t n = 100000;
     //cout << "\nNumber of points to generate(int): "; // n = #points
     //cin >> n;
+    //int64_t n = 1000;
 
-    int64_t num_angles = 1;
+    int64_t n_array[5];
+
+    for (int i=1; i<6; ++i)
+        n_array[i-1] = i * 100000;//100000;
+
+    int64_t num_angles = 10;
     //cout << "\nNumber of angles to generate(int): ";
     //cin >> num_angles;
-    int64_t num_sets = 1;
+    int64_t num_sets = 25;
     //cout << "\nNumber of point sets to generate(int): ";
     //cin >> num_sets;
 
     for(auto n: n_array){
         cout << "\n\n ----RUN REPORT----\n";
-        //cout << "Coordinate Upper Bound: " << upper_bound << "\n";
-        //cout << "Coordinate Lower Bound: " << lower_bound << "\n";
         cout << "N                     : " << n << "\n";
 
         double overall_sum = 0;
         double delta_sum = 0;
+        
         for(int64_t i = 0; i<num_sets; ++i)
             overall_sum += algorithm(upper_bound, lower_bound, n, num_angles, delta_sum);
         
