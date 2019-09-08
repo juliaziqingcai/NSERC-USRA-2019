@@ -7,6 +7,8 @@ LAST UPDATE:	July 11th, 2019
 LANGUAGE:	PYTHON
 VERSION:	3 and above
 
+ENVIRONMENTS:	Visual Studio Code 1, Ubuntu 18, Windows 10 Home
+
 ISSUES:		1) Python2 causes float division to become integer division
 		2) Python2 causes the terminal input to require quotation marks
 			around user input or else it will cause a runtime error
